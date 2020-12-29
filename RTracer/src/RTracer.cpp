@@ -10,6 +10,9 @@
 #include <chrono>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <chrono>
+#include <chrono>
+
 #include "core/stb_image_write.h"
 
 #include "core/utility.h"
@@ -28,6 +31,7 @@
 #include "geometry/sphere.h"
 
 #include "camera.h"
+#include "imgui_initializer.h"
 #include "world.h"
 #include "materials/dieletric_material.h"
 
@@ -64,6 +68,60 @@ struct pixel
 	{
 	}
 };
+
+long long Render(const camera& camera, const world& world, const std::vector<pixel>& pixels,
+                 std::vector<unsigned char>& pixel_colors,
+                 const int image_width, const int image_height)
+{
+	// render settings
+	const uint samples_per_pixel = 2;
+	const double inv_samples_per_pixel = 1.0 / samples_per_pixel;
+	const int max_depth = 12;
+
+	auto start = std::chrono::high_resolution_clock::now();
+	std::for_each(
+		std::execution::par_unseq,
+		pixels.begin(),
+		pixels.end(),
+		[&pixel_colors, &world, &camera,
+			samples_per_pixel, inv_samples_per_pixel, image_height, image_width, max_depth](pixel pixel)
+		{
+			color pixel_color;
+			for (uint i = 0; i < samples_per_pixel; ++i)
+			{
+				const auto u = static_cast<double>(pixel.x + random_double()) / (image_width - 1);
+				const auto v = static_cast<double>(pixel.y + random_double()) / (image_height - 1);
+				pixel_color += ray_color(camera.compute_ray_to(u, v), world, max_depth);
+			}
+
+			pixel_colors[pixel.index] = to_writable_color(pixel_color.x(), inv_samples_per_pixel);
+			pixel_colors[pixel.index + 1] = to_writable_color(pixel_color.y(), inv_samples_per_pixel);
+			pixel_colors[pixel.index + 2] = to_writable_color(pixel_color.z(), inv_samples_per_pixel);
+		});
+
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+	return duration.count();
+}
+
+void UpdateOpenGLViewer(const int image_width, const int image_height, std::vector<unsigned char> pixel_colors, GLuint render_texture_id)
+{
+	glBindTexture(GL_TEXTURE_2D, render_texture_id);
+
+	// Setup filtering parameters for display
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	// This is required on WebGL for non power-of-two textures
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); // Same
+
+	// Upload pixels into texture
+#if defined(GL_UNPACK_ROW_LENGTH) && !defined(__EMSCRIPTEN__)
+	glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+#endif
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_width, image_height, 0,
+	             GL_RGB, GL_UNSIGNED_BYTE, pixel_colors.data());
+}
 
 int main()
 {
@@ -111,55 +169,77 @@ int main()
 		}
 	}
 
-	char input = ' ';
-	do
+	gui::initialize_opengl();
+	GLuint render_texture_id;
+	glGenTextures(1, &render_texture_id);
+
+	long last_render_time = Render(camera, world, pixels, pixel_colors, image_width, image_height);
+	UpdateOpenGLViewer(image_width, image_height, pixel_colors, render_texture_id);
+
+	while (!glfwWindowShouldClose(gui::window))
 	{
-		// render settings
-		const uint samples_per_pixel = input == 'r' ? 1000 : 4;
-		const double inv_samples_per_pixel = 1.0 / samples_per_pixel;
-		const int max_depth = 12;
+		bool render = false;
+		gui::start_frame();
 
-		vec3 direction = vec3::zero();
-		double speed = 0.04;
-		if (input == 'z') direction = vec3(0.0, 0.0, 1.0);
-		else if (input == 'q') direction = vec3(-1.0, 0.0, 0.0);
-		else if (input == 's') direction = vec3(0.0, 0.0, -1.0);
-		else if (input == 'd') direction = vec3(1.0, 0.0, 0.0);
-		else if (input == 'a') camera.vertical_fov -= 5.0;
-		else if (input == 'e') camera.vertical_fov += 5.0;
+		ImGui::PushStyleVar(ImGuiStyleVar_ChildRounding, 5.0f);
 
-		camera.origin = point3(camera.origin + direction * speed);
-		camera.update();
-		
-		auto start = std::chrono::high_resolution_clock::now(); 
-		std::for_each(
-			std::execution::par_unseq,
-			pixels.begin(),
-			pixels.end(),
-			[&pixel_colors, &world, &camera,
-				samples_per_pixel, inv_samples_per_pixel, image_height, image_width, max_depth](pixel pixel)
+		ImGui::SetNextWindowDockID(0, ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Hierarchy"))
+		{
+			ImGui::Text("Render time: %llums", last_render_time);
+			//vec3 direction = vec3::zero();
+			//double speed = 0.04;
+			//if (ImGui::Button("Forward")) direction = vec3::forward();
+			//if (ImGui::Button("Backward")) direction = vec3::backward();
+			//if (ImGui::Button("Right")) direction = vec3::right();
+			//if (ImGui::Button("Left")) direction = vec3::left();
+			//if (direction.length_squared() > epsilon)
+			//{
+			//	camera.origin = point3(camera.origin + direction * speed);
+			//	camera.update();
+			//	render = true;
+			//}
+
+			if (ImGui::CollapsingHeader("Camera"))
 			{
-				color pixel_color;
-				for (uint i = 0; i < samples_per_pixel; ++i)
+				bool changed = false;
+				float* tmp = gui::vec3_to_temporary_float3(camera.origin);
+				if ((changed |= ImGui::DragFloat3("Origin", tmp)))
 				{
-					const auto u = static_cast<double>(pixel.x + random_double()) / (image_width - 1);
-					const auto v = static_cast<double>(pixel.y + random_double()) / (image_height - 1);
-					pixel_color += ray_color(camera.compute_ray_to(u, v), world, max_depth);
+					camera.origin = point3(gui::float3_to_vec3(tmp));
 				}
 
-				pixel_colors[pixel.index] = to_writable_color(pixel_color.x(), inv_samples_per_pixel);
-				pixel_colors[pixel.index + 1] = to_writable_color(pixel_color.y(), inv_samples_per_pixel);
-				pixel_colors[pixel.index + 2] = to_writable_color(pixel_color.z(), inv_samples_per_pixel);
-			});
+				tmp = gui::vec3_to_temporary_float3(camera.target);
+				if ((changed |= ImGui::DragFloat3("Target", tmp)))
+				{
+					camera.target = point3(gui::float3_to_vec3(tmp));
+				}
 
-		stbi_write_jpg("rtracer_output.jpg", image_width, image_height, channels_num, pixel_colors.data(),
-		               image_width * channels_num);
-		auto stop = std::chrono::high_resolution_clock::now(); 
-		auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-		std::cout << duration.count() << std::endl; 
+				if (changed)
+				{
+					camera.update();
+					render = true;
+				}
+			}
+		}
+		ImGui::End();
+		ImGui::SetNextWindowDockID(1, ImGuiCond_FirstUseEver);
+		if (ImGui::Begin("Viewer"))
+		{
+			auto width = ImGui::GetWindowSize().x;
+			ImGui::Image((ImTextureID)render_texture_id, ImVec2(width, width / camera.aspect_ratio()));
+		}
+		ImGui::End();
 
-		input = _getch();
-	} while (input != '\n');
+		gui::end_frame();
+
+		if (render)
+		{
+			last_render_time = Render(camera, world, pixels, pixel_colors, image_width, image_height);
+			UpdateOpenGLViewer(image_width, image_height, pixel_colors, render_texture_id);
+		}
+	}
+	gui::cleanup();
 
 	return 0;
 }

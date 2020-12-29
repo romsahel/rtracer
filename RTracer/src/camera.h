@@ -39,7 +39,7 @@ public:
 		m_viewport_height = 2.0 * h;
 		m_viewport_width = m_aspect_ratio * m_viewport_height;
 
-		m_w = normalize(origin - look_at);
+		m_w = normalize(origin - target);
 		m_u = normalize(cross(vec3::up(), m_w));
 		m_v = cross(m_w, m_u);
 
@@ -49,7 +49,7 @@ public:
 	}
 
 	point3 origin = point3(vec3::backward() * 2.0);
-	point3 look_at = point3(vec3::zero());
+	point3 target = point3(vec3::zero());
 	double vertical_fov = 70.0;
 	double aperture = 0.0;
 	double focus_distance = 2.0;

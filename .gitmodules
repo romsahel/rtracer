@@ -1,0 +1,6 @@
+[submodule "RTracer/external/imgui"]
+	path = RTracer/external/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "RTracer/external/glfw"]
+	path = RTracer/external/glfw
+	url = https://github.com/glfw/glfw
