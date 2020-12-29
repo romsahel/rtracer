@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?> 
+<AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
+	<Type Name="vec3">
+		<DisplayString>{{{m_xyz[0],g}, {m_xyz[1],g}, {m_xyz[2],g}}}</DisplayString>
+	</Type>
+</AutoVisualizer>
