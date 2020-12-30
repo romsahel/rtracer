@@ -9,7 +9,7 @@ struct hit_info
 	point3 point;
 	direction3 normal;
 	material* material;
-	double distance;
+	double distance = -1.0;
 	bool front_face = false;
 
 	explicit hit_info(::material* material)
@@ -27,5 +27,11 @@ struct hit_info
 class hittable
 {
 public:
+	explicit hittable(const char* name)
+		: name(name)
+	{
+	}
+
 	virtual bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const = 0;
+	const char* name;
 };

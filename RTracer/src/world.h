@@ -7,6 +7,8 @@
 class world : public hittable
 {
 public:
+	world() : hittable("World") {}
+	
 	~world()
 	{
 		for (hittable* obj : m_list)
@@ -49,6 +51,11 @@ public:
 		}
 
 		return has_hit;
+	}
+
+	const std::vector<hittable*>& hittables() const
+	{
+		return m_list;
 	}
 
 private:

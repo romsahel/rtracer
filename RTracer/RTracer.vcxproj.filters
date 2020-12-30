@@ -66,7 +66,22 @@
     <ClInclude Include="src\core\vec3_utility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\imgui_initializer.h">
+    <ClInclude Include="src\raytrace_renderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\gui_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\gui_base_inspectors.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\gui_initializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\gl_includer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gui\gui_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

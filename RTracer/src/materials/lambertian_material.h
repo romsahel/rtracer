@@ -8,7 +8,8 @@
 class lambertian_material : public material
 {
 public:
-	lambertian_material(const color& a) : albedo(a)
+	lambertian_material(const char* name, const color& a)
+		: material(name), albedo(a)
 	{
 	}
 
@@ -27,7 +28,7 @@ public:
 
 	static lambertian_material& default_material()
 	{
-		static lambertian_material value{color::gray()};
+		static lambertian_material value{"default lambertian", color::gray()};
 		return value;
 	}
 };

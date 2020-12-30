@@ -173,7 +173,10 @@
     <ClInclude Include="src\core\hittable.h" />
     <ClInclude Include="src\core\point3.h" />
     <ClInclude Include="src\core\vec3_utility.h" />
-    <ClInclude Include="src\imgui_initializer.h" />
+    <ClInclude Include="src\core\gl_includer.h" />
+    <ClInclude Include="src\gui\gui_base_inspectors.h" />
+    <ClInclude Include="src\gui\gui_initializer.h" />
+    <ClInclude Include="src\gui\gui_utils.h" />
     <ClInclude Include="src\materials\dieletric_material.h" />
     <ClInclude Include="src\materials\lambertian_material.h" />
     <ClInclude Include="src\materials\material.h" />
@@ -184,6 +187,8 @@
     <ClInclude Include="src\core\stb_image_write.h" />
     <ClInclude Include="src\core\utility.h" />
     <ClInclude Include="src\core\vec3.h" />
+    <ClInclude Include="src\gui\gui_image.h" />
+    <ClInclude Include="src\raytrace_renderer.h" />
     <ClInclude Include="src\world.h" />
   </ItemGroup>
   <ItemGroup>

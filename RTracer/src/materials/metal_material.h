@@ -8,7 +8,8 @@
 class metal_material : public material
 {
 public:
-	metal_material(const color& a, double r) : albedo(a), roughness(r)
+	metal_material(const char* name, const color& a, double r)
+		: material(name), albedo(a), roughness(r)
 	{
 	}
 
@@ -25,7 +26,7 @@ public:
 
 	static metal_material& default_material()
 	{
-		static metal_material value{color::gray(), 0.0};
+		static metal_material value{"default_metal", color::gray(), 0.0};
 		return value;
 	}
 };

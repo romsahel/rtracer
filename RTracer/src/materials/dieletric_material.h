@@ -8,7 +8,8 @@
 class dielectric_material : public material
 {
 public:
-	explicit dielectric_material(double index_of_refraction)
+	explicit dielectric_material(const char* name, double index_of_refraction)
+		: material(name)
 	{
 		this->index_of_refraction(index_of_refraction);
 	}
@@ -33,6 +34,11 @@ public:
 		return true;
 	}
 
+	double index_of_refraction()
+	{
+		return m_index_of_refraction;
+	}
+	
 	void index_of_refraction(double value)
 	{
 		m_index_of_refraction = value;
@@ -41,7 +47,7 @@ public:
 
 	static dielectric_material& default_material()
 	{
-		static dielectric_material value{1.0};
+		static dielectric_material value{"default dielectric", 1.0};
 		return value;
 	}
 
