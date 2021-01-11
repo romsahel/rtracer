@@ -65,7 +65,7 @@ namespace gui
 	{
 		ImGui::PushID(&value);
 		float* tmp = gui::vec3_to_temporary_float3(value);
-		const bool changed = ImGui::ColorPicker3(label, tmp);
+		const bool changed = ImGui::ColorEdit3(label, tmp);
 		ImGui::PopID();
 
 		if (changed)
@@ -73,11 +73,11 @@ namespace gui
 		return changed;
 	}
 
-	bool draw_double(const char* label, double& value, float speed = 0.1f)
+	bool draw_double(const char* label, double& value, float speed = 0.1f, float v_min = 0.0f, float v_max = 0.0f)
 	{
 		auto tmp = static_cast<float>(value);
 		ImGui::PushID(&value);
-		const bool changed = ImGui::DragFloat(label, &tmp, speed);
+		const bool changed = ImGui::DragFloat(label, &tmp, speed, v_min, v_max);
 		ImGui::PopID();
 
 		if (changed)

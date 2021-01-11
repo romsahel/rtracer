@@ -5,6 +5,11 @@
 #include "core/color.h"
 #include "core/hittable.h"
 
+/// <summary>
+/// metal material are metal-looking materials.
+/// Light is reflected when hitting the surface.
+/// Depending on the roughness of the metal, the bounce can be more or less random to produce blurry reflection
+/// </summary>
 class metal_material : public material
 {
 public:

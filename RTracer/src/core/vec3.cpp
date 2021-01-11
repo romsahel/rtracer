@@ -3,7 +3,7 @@
 
 vec3 vec3::random_in_unit_sphere()
 {
-	while (true)
+	while (true)  // TODO: use a nicer algorithm than rejection
 	{
 		vec3 result = random(-1.0, 1.0);
 		if (result.length_squared() >= 1.0) continue;
@@ -13,7 +13,7 @@ vec3 vec3::random_in_unit_sphere()
 
 vec3 vec3::random_in_unit_disk()
 {
-	while (true)
+	while (true)  // TODO: use a nicer algorithm than rejection
 	{
 		vec3 result(random_double(-1.0, 1.0), random_double(-1.0, 1.0), 0.0);
 		if (result.length_squared() >= 1.0) continue;

@@ -19,10 +19,6 @@ struct vec3
 	{
 	}
 
-	vec3(const vec3& v) : vec3(v.m_xyz[0], v.m_xyz[1], v.m_xyz[2])
-	{
-	}
-
 	double& x() { return m_xyz[0]; }
 	double& y() { return m_xyz[1]; }
 	double& z() { return m_xyz[2]; }
@@ -79,13 +75,17 @@ struct vec3
 		return fabs(m_xyz[0]) < epsilon && fabs(m_xyz[1]) < epsilon && fabs(m_xyz[2]) < epsilon;
 	}
 
+	// return a random vec3
 	static vec3 random(double min = 0.0, double max = 1.0)
 	{
 		return vec3(random_double(min, max), random_double(min, max), random_double(min, max));
 	}
 
+	// return a random vec3 contained in a sphere placed at the origin and of a radius of 1
 	static vec3 random_in_unit_sphere();
+	// return a random vec3 contained in a disk placed at the origin and of a radius of 1
 	static vec3 random_in_unit_disk();
+	// return a random vec3 contained in a hemisphere placed at the origin and of a radius of 1
 	static vec3 random_in_hemisphere(const vec3& normal);
 
 	static vec3 zero() { return vec3(0.0, 0.0, 0.0); }

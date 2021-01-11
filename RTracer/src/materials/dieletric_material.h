@@ -5,6 +5,10 @@
 #include "core/color.h"
 #include "core/hittable.h"
 
+/// <summary>
+/// dieletric material are glass-like materials
+/// Light can be both refracted and reflected when hitting the surface, but in precise and predictable ways
+/// </summary>
 class dielectric_material : public material
 {
 public:

@@ -2,13 +2,13 @@
 
 #include "core/hittable.h"
 
-#include "materials/lambertian_material.h"
-
+/// <summary>
+/// represent a sphere
+/// defined by a point in world space and a radius
+/// </summary>
 class sphere : public hittable
 {
 public:
-	material* material = &lambertian_material::default_material();
-
 	sphere(const char* name, const point3& center, double radius)
 		: hittable(name), center(center), radius(radius)
 	{

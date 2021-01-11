@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "core/hittable.h"
+#include "materials/material.h"
 
 class world : public hittable
 {
@@ -16,7 +17,7 @@ public:
 			delete obj;
 		}
 
-		for (material* mat : m_materials)
+		for (::material* mat : m_materials)
 		{
 			delete mat;
 		}
@@ -36,6 +37,22 @@ public:
 		auto* added = new T(std::forward<Args>(args)...);
 		m_materials.push_back(added);
 		return *added;
+	}
+
+	void shallow_add(hittable* hittable)
+	{
+		m_list.push_back(hittable);
+	}
+
+	void shallow_add_material(::material* material)
+	{
+		m_materials.push_back(material);
+	}
+
+	void shallow_clear()
+	{
+		m_list.clear();
+		m_materials.clear();
 	}
 
 	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const override
@@ -60,5 +77,5 @@ public:
 
 private:
 	std::vector<hittable*> m_list;
-	std::vector<material*> m_materials;
+	std::vector<::material*> m_materials;
 };

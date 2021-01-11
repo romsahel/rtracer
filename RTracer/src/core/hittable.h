@@ -1,15 +1,25 @@
 ﻿#pragma once
 
+#include "direction3.h"
+#include "point3.h"
+#include "ray.h"
+#include "vec3_utility.h"
 #include "materials/material.h"
-#include "core/ray.h"
-#include "core/vec3.h"
 
+/// <summary>
+/// contains information of how the light hits an hittable object
+/// </summary>
 struct hit_info
 {
+	// point in world space where the hit occurred
 	point3 point;
+	// direction for the bouncing ray
 	direction3 normal;
+	// material of the hit object
 	material* material;
+	// distance from the origin of the raycast to the hit point
 	double distance = -1.0;
+	// true if the raycast hit the object from its frontside ; false if it hit from the backside
 	bool front_face = false;
 
 	explicit hit_info(::material* material)
@@ -17,6 +27,7 @@ struct hit_info
 	{
 	}
 
+	// set both front_face and normal property using the raycast and the outward normal to compute
 	inline void set_face_normal(const ray& r, const direction3& outward_normal)
 	{
 		front_face = dot(r.direction(), outward_normal) < 0;
@@ -24,14 +35,20 @@ struct hit_info
 	}
 };
 
+/// <summary>
+/// represents objects that can be hit by light (e.g. geometry)
+/// </summary>
 class hittable
 {
 public:
-	explicit hittable(const char* name)
-		: name(name)
-	{
-	}
+	explicit hittable(const char* name);
 
 	virtual bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const = 0;
+
+	// name is used for ui and debug purposes
 	const char* name;
+
+	// pointer to material used by object for render (raw pointer, lifetime not managed by the object. see world for management)
+	// material has a default value to the default lambertian material
+	material* material;
 };

@@ -3,13 +3,13 @@
 #include "core/utility.h"
 #include "core/hittable.h"
 
-#include "materials/lambertian_material.h"
-
+/// <summary>
+/// represent a plane
+/// defined by a point in world space and a normal
+/// </summary>
 class plane : public hittable
 {
 public:
-	material* material = &lambertian_material::default_material();
-
 	plane(const char* name, const point3& point, const direction3& normal)
 		: hittable(name), point(point), normal(normalize(normal))
 	{
@@ -26,6 +26,7 @@ public:
 			{
 				info.distance = distance;
 				info.point = ray.at(info.distance);
+				info.material = material;
 				info.set_face_normal(ray, normal);
 			}
 			else

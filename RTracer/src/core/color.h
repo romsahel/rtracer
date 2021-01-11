@@ -7,13 +7,15 @@
 
 struct color : vec3
 {
-	color(double x, double y, double z)
-		: vec3(x, y, z)
+	explicit color(const vec3& v) : vec3(v)
 	{
 	}
 
-	explicit color(double xyz)
-		: vec3(xyz)
+	color(double x, double y, double z) : vec3(x, y, z)
+	{
+	}
+
+	explicit color(double xyz) : vec3(xyz)
 	{
 	}
 
@@ -26,15 +28,9 @@ struct color : vec3
 	static color green() { return color(0, 1, 0); }
 	static color magenta() { return color(1, 0, 1); }
 	static color gray() { return color(0.5, 0.5, 0.5); }
-
-	explicit color(const ::vec3& v)
-		: vec3(v)
-	{
-	}
 };
 
 inline unsigned char to_writable_color(double rgb, double inv_samples_per_pixel)
 {
 	return static_cast<unsigned char>((clamp(255.0 * sqrt(inv_samples_per_pixel * rgb), 0.0, 255.0)));
 }
-

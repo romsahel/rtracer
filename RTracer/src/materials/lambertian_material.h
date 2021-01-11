@@ -5,6 +5,10 @@
 #include "core/color.h"
 #include "core/hittable.h"
 
+/// <summary>
+/// lambertian material are solid/mat-looking materials. They are the default 'diffuse' material
+/// Light bounces in random direction (from the surface normal) when hitting the surface
+/// </summary>
 class lambertian_material : public material
 {
 public:
