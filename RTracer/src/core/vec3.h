@@ -27,6 +27,11 @@ struct vec3
 	const double& y() const { return m_xyz[1]; }
 	const double& z() const { return m_xyz[2]; }
 
+	double operator[](int index) const
+	{
+		return m_xyz[index];
+	}
+
 	vec3 operator-() const
 	{
 		return vec3(-m_xyz[0], -m_xyz[1], -m_xyz[2]);
@@ -78,7 +83,7 @@ struct vec3
 	// return a random vec3
 	static vec3 random(double min = 0.0, double max = 1.0)
 	{
-		return vec3(random_double(min, max), random_double(min, max), random_double(min, max));
+		return vec3(random::get<double>(min, max), random::get<double>(min, max), random::get<double>(min, max));
 	}
 
 	// return a random vec3 contained in a sphere placed at the origin and of a radius of 1
@@ -94,8 +99,7 @@ struct vec3
 	static vec3 right() { return vec3(1.0, 0.0, 0.0); }
 	static vec3 left() { return vec3(-1.0, 0.0, 0.0); }
 	static vec3 forward() { return vec3(0.0, 0.0, 1.0); }
-	static vec3 backward() { return vec3(0.0, 0.0, -1.0); }
-
+	static vec3 backward() { return vec3(0.0, 0.0, -1.0); }	
 
 private:
 	double m_xyz[3];

@@ -11,6 +11,8 @@ struct raytrace_settings
 {
 	const int image_width;
 	const int image_height;
+
+	bool use_bvh;
 };
 
 /// <summary>
@@ -124,8 +126,8 @@ public:
 			[&pixel_colors, &world, &camera,
 				inv_samples_per_pixel, settings, bounce_depth, bounce_depth_limit_color, ray_color](raytrace_pixel& pixel)
 			{
-				const auto u = (pixel.x + random_double()) / (static_cast<double>(settings.image_width) - 1);
-				const auto v = (pixel.y + random_double()) / (static_cast<double>(settings.image_height) - 1);
+				const auto u = (pixel.x + random::get<double>()) / (static_cast<double>(settings.image_width) - 1);
+				const auto v = (pixel.y + random::get<double>()) / (static_cast<double>(settings.image_height) - 1);
 				pixel.color += ray_color(camera.compute_ray_to(u, v), world, bounce_depth, bounce_depth_limit_color);
 
 				// convert pixel.color into image-readable ascii pixel_colors

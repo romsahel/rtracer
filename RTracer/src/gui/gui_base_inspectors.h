@@ -87,7 +87,7 @@ inline bool draw_hittable_inspector(plane* hittable)
 
 inline bool draw_hittable_inspector(hittable* hittable)
 {
-	if (ImGui::CollapsingHeader(hittable->name, ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::CollapsingHeader(hittable->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		if (auto cast = dynamic_cast<sphere*>(hittable); cast != nullptr)
 			return draw_hittable_inspector(cast);
@@ -137,6 +137,6 @@ inline void draw_hierarchy(camera& camera, const world& world, void** selection)
 
 	for (hittable* obj : world.hittables())
 	{
-		add_to_hierarchy(obj, obj->name, selection);
+		add_to_hierarchy(obj, obj->name.c_str(), selection);
 	}
 }

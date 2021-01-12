@@ -35,7 +35,7 @@ public:
 		if (!has_valid_render()) return;
 		
 		ImGui::SetCursorPos(image_position);
-		ImGui::Image(selection_image.texture_id(), size);
+		ImGui::Image(m_image.texture_id(), size);
 	}
 
 	// render only the given selected object
@@ -46,25 +46,26 @@ public:
 
 		material* saved_material = hittable_selection->material;
 		hittable_selection->material = &selection_material;
-		selectionWorld.shallow_add(hittable_selection);
+		m_world.shallow_add(hittable_selection);
+		m_world.signal_scene_change();
 
 		m_render.set_pixels_from(renderer.empty_render);
 		m_render.iteration = 10.0;
 
 		for (size_t i = 0; i < 1; i++)
 		{
-			renderer.render(camera, selectionWorld, m_render, raytrace_renderer::ray_color_for_mask);
+			renderer.render(camera, m_world, m_render, raytrace_renderer::ray_color_for_mask);
 		}
 
-		selection_image.update(renderer.settings.image_width, renderer.settings.image_height,
+		m_image.update(renderer.settings.image_width, renderer.settings.image_height,
 		                       m_render.colors.data());
 
 		hittable_selection->material = saved_material;
-		selectionWorld.shallow_clear();
+		m_world.shallow_clear();
 	}
 
 private:
 	raytrace_render_data m_render;
-	gui_image selection_image{true};
-	world selectionWorld;
+	gui_image m_image{true};
+	world m_world;
 };

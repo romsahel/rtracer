@@ -24,6 +24,9 @@ int main()
 {
 	// camera settings
 	camera camera(16.0 / 9.0);
+	camera.origin = point3(0.5, 2.0, -1.0);
+	camera.target = point3(3.0, 0, 2.5);
+	camera.update();
 
 	// output settings
 	const int image_width = 512;
@@ -32,20 +35,31 @@ int main()
 	world world;
 
 	material& selection_material = world.add_material<lambertian_material>("Selection material", color(1.0, 0.0, 0.0));
-	material& glassMat = world.add_material<dielectric_material>("Glass", 1.5);
-	material& shinyMetal = world.add_material<metal_material>("Shiny metal", color(0.8, 0.8, 0.8), 0.05);
-	material& roughMetal = world.add_material<metal_material>("Rough metal", color(0.8, 0.6, 0.2), 0.6);
+	world.add_material<dielectric_material>("Glass", 1.5);
+	world.add_material<metal_material>("Shiny chrome metal", color(0.8, 0.8, 0.8), 0.05);
+	world.add_material<metal_material>("Gold Rough metal", color(0.8, 0.6, 0.2), 0.6);
+	world.add_material<metal_material>("Shiny green metal", color(0.1, 0.8, 0.1), 0.05);
+	world.add_material<metal_material>("Rough yellow metal", color(0.0, 0.8, 0.8), 0.3);
+	world.add_material<lambertian_material>("Diffuse blue", color(0.2, 1.0, 0.0));
+	world.add_material<lambertian_material>("Diffuse mauve", color(0.9, 0.69, 1.0));
 
-	//auto& ground = world.add<sphere>("Ground", point3(0.0, -1.25 - 100, 0.0), 100);
-	auto& ground = world.add<plane>("Ground", point3(0.0, -1.25, 0.0), direction3(0.0, 1.0, 0.0));
-	auto& leftSphere = world.add<sphere>("Left sphere", point3(-2.5, 0, 3.5), 1.25);
-	auto& rightSphere = world.add<sphere>("Right sphere", point3(1.5, 0.5, 3), 1.25);
-	auto& smallSphere = world.add<sphere>("Small sphere", point3(0, 0, 0), 0.3);
+	auto& ground = world.add<sphere>("Ground", point3(0.0, -1.25 - 100, 0.0), 100);
+	//auto& ground = world.add<plane>("Ground", point3(0.0, -1.25, 0.0), direction3(0.0, 1.0, 0.0));
 
-	smallSphere.material = &glassMat;
-	rightSphere.material = &shinyMetal;
-	leftSphere.material = &roughMetal;
+	char name[] = "Sphere 00";
+	for (int x = 0; x < 10; x++)
+	{
+		for (int z = 0; z < 10; z++)
+		{
+			name[7] = static_cast<char>('0' + x);
+			name[8] = static_cast<char>('0' + z);
+			auto& obj = world.add<sphere>(name, point3(x * 2 + random::get<double>(-0.9, 0.9), 0.2, z * 2 + random::get<double>(-0.9, 0.9)), random::get<double>(0.2, 0.8));
+			obj.material = world.materials()[random::get<int>(1, static_cast<int>(world.materials().size()) - 1)];
+		}
+	}
 
+	world.signal_scene_change();
+	
 	gui::initialize_opengl();
 
 	raytrace_renderer raytrace_renderer{image_width, image_height};
@@ -78,6 +92,7 @@ int main()
 
 			scene_changed |= ImGui::DragInt("Max render iteration", &max_render_iteration);
 			scene_changed |= ImGui::DragInt("Max depth", &raytrace_renderer.current_render.bounce_depth);
+			ImGui::Checkbox("Use BVH", &world.use_bvh);
 		}
 		ImGui::End();
 
@@ -103,6 +118,7 @@ int main()
 		{
 			raytrace_renderer.signal_scene_change();
 			selection_overlay.signal_change();
+			world.signal_scene_change();
 			pause_rendering = false;
 		}
 

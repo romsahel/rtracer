@@ -38,6 +38,8 @@ public:
 		return is_hit;
 	}
 
+	bool bounding_box(aabb& output_aabb) const override { return false; }
+
 	point3 point;
 	direction3 normal;
 };

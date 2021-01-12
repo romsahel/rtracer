@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "core/aabb.h"
 #include "core/hittable.h"
 
 /// <summary>
@@ -44,6 +45,13 @@ public:
 		}
 
 		return is_hit;
+	}
+
+	bool bounding_box(aabb& output_aabb) const override
+	{
+		const vec3 size(radius);
+		output_aabb = aabb(point3(center - size), point3(center + size));
+		return true;
 	}
 
 	point3 center;

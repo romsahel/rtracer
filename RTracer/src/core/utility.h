@@ -36,10 +36,22 @@ inline double clamp(double x, double min, double max)
 	return x;
 }
 
-// return a random double from min to max
-inline double random_double(double min = 0.0, double max = 1.0)
+namespace random
 {
-	static std::uniform_real_distribution<double> distribution(min, max);
-	static std::mt19937 generator;
-	return distribution(generator);
+	// return a random double from min to max
+	template <typename T>
+	inline T get(T min = 0, T max = 1)
+	{
+		static std::mt19937 generator;
+		if constexpr (std::_Is_any_of_v<T, float, double, long double>)
+		{
+			std::uniform_real_distribution<T> distribution(min, max);
+			return distribution(generator);	
+		}
+		else
+		{
+			std::uniform_int_distribution<T> distribution(min, max);
+			return distribution(generator);	
+		}
+	}
 }

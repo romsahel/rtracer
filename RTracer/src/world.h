@@ -2,14 +2,18 @@
 
 #include <vector>
 
+
+#include "bvh.h"
 #include "core/hittable.h"
 #include "materials/material.h"
 
-class world : public hittable
+class world
 {
 public:
-	world() : hittable("World") {}
-	
+	world()
+	{
+	}
+
 	~world()
 	{
 		for (hittable* obj : m_list)
@@ -22,8 +26,8 @@ public:
 			delete mat;
 		}
 	}
-	
-	template<typename T, class... Args>
+
+	template <typename T, class... Args>
 	T& add(Args&&... args)
 	{
 		auto* added = new T(std::forward<Args>(args)...);
@@ -31,7 +35,7 @@ public:
 		return *added;
 	}
 
-	template<typename T, class... Args>
+	template <typename T, class... Args>
 	T& add_material(Args&&... args)
 	{
 		auto* added = new T(std::forward<Args>(args)...);
@@ -55,19 +59,27 @@ public:
 		m_materials.clear();
 	}
 
-	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const override
+	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const
 	{
-		bool has_hit = false;
 		info.distance = t_max;
-		for (const auto& hittable : m_list)
-		{
-			if (hittable->hit(ray, t_min, info.distance, info))
-			{
-				has_hit = true;
-			}
-		}
 
-		return has_hit;
+		if (use_bvh)
+		{
+			return m_bvh->hit(ray, t_min, t_max, info);
+		}
+		else
+		{
+			bool has_hit = false;
+			for (const auto& hittable : m_list)
+			{
+				if (hittable->hit(ray, t_min, info.distance, info))
+				{
+					has_hit = true;
+				}
+			}
+
+			return has_hit;
+		}
 	}
 
 	const std::vector<hittable*>& hittables() const
@@ -75,7 +87,20 @@ public:
 		return m_list;
 	}
 
+	const std::vector<material*>& materials() const
+	{
+		return m_materials;
+	}
+
+	void signal_scene_change()
+	{
+		m_bvh = new bvh_node(m_list, 0, m_list.size());
+	}
+
+	bool use_bvh{true};
+
 private:
+	hittable* m_bvh;
 	std::vector<hittable*> m_list;
 	std::vector<::material*> m_materials;
 };

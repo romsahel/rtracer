@@ -6,6 +6,7 @@
 #include "vec3_utility.h"
 #include "materials/material.h"
 
+class aabb;
 /// <summary>
 /// contains information of how the light hits an hittable object
 /// </summary>
@@ -42,11 +43,13 @@ class hittable
 {
 public:
 	explicit hittable(const char* name);
+	virtual ~hittable() = default;
 
 	virtual bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const = 0;
+	virtual bool bounding_box(aabb& output_aabb) const = 0;
 
 	// name is used for ui and debug purposes
-	const char* name;
+	std::string name;
 
 	// pointer to material used by object for render (raw pointer, lifetime not managed by the object. see world for management)
 	// material has a default value to the default lambertian material

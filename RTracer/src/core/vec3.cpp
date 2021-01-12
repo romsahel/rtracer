@@ -15,7 +15,7 @@ vec3 vec3::random_in_unit_disk()
 {
 	while (true)  // TODO: use a nicer algorithm than rejection
 	{
-		vec3 result(random_double(-1.0, 1.0), random_double(-1.0, 1.0), 0.0);
+		vec3 result(random::get<double>(-1.0, 1.0), random::get<double>(-1.0, 1.0), 0.0);
 		if (result.length_squared() >= 1.0) continue;
 		return result;
 	}

@@ -23,7 +23,7 @@ public:
 		const double refraction_ratio = hit.front_face ? m_inv_index_of_refraction : m_index_of_refraction;
 		const double cos_theta = fmin(dot(-raycast.direction(), hit.normal), 1.0);
 		const double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
-		if (refraction_ratio * sin_theta < 1.0 || reflectance(cos_theta, refraction_ratio) > random_double())
+		if (refraction_ratio * sin_theta < 1.0 || reflectance(cos_theta, refraction_ratio) > random::get<double>())
 		{
 			const direction3 reflected = direction3(reflect(raycast.direction(), hit.normal));
 			scattered = ray(hit.point, reflected);
