@@ -16,12 +16,15 @@ struct hit_info
 	point3 point;
 	// direction for the bouncing ray
 	direction3 normal;
-	// material of the hit object
-	material* material;
 	// distance from the origin of the raycast to the hit point
 	double distance = -1.0;
 	// true if the raycast hit the object from its frontside ; false if it hit from the backside
 	bool front_face = false;
+	
+	// material of the hit object
+	material* material;
+	// uv coordinate of the material at the hitpoint
+	vec3 uv_coordinates;
 
 	explicit hit_info(::material* material)
 		: material(material)

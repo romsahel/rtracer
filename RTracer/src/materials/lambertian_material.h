@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "material.h"
+#include "texture.h"
 
 #include "core/color.h"
 #include "core/hittable.h"
@@ -13,7 +14,12 @@ class lambertian_material : public material
 {
 public:
 	lambertian_material(const char* name, const color& a)
-		: material(name), albedo(a)
+		: material(name), albedo(&texture_store().add<solid_color>(a))
+	{
+	}
+
+	lambertian_material(const char* name, texture& a)
+		: material(name), albedo(&a)
 	{
 	}
 
@@ -24,11 +30,11 @@ public:
 			scatter_direction = hit.normal;
 
 		scattered = ray(hit.point, scatter_direction);
-		attenuation = albedo;
+		attenuation = albedo->value_at(hit.uv_coordinates, hit.point);
 		return true;
 	}
 
-	color albedo;
+	texture* albedo;
 
 	static lambertian_material& default_material()
 	{

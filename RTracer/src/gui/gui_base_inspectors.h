@@ -28,10 +28,26 @@ inline bool draw_camera_inspector(camera& camera)
 	return changed;
 }
 
+inline bool draw_texture_inspector(const char* name, texture* texture)
+{
+	bool changed = false;
+	if (const auto cast = dynamic_cast<solid_color*>(texture); cast != nullptr)
+	{
+		changed |= gui::draw_color(name, cast->color_value);
+	}
+	if (const auto cast = dynamic_cast<checker_texture*>(texture); cast != nullptr)
+	{
+		ImGui::Text(name);
+		changed |= draw_texture_inspector("Odd", cast->odd);
+		changed |= draw_texture_inspector("Even", cast->even);
+	}
+	return changed;
+}
+
 inline bool draw_material_inspector(lambertian_material* material)
 {
 	bool changed = false;
-	changed |= gui::draw_color("Albedo", material->albedo);
+	changed |= draw_texture_inspector("Albedo", material->albedo);
 	return changed;
 }
 
@@ -63,6 +79,8 @@ inline bool draw_material_inspector(material* material)
 		if (const auto cast = dynamic_cast<dielectric_material*>(material); cast != nullptr)
 			return draw_material_inspector(cast);
 	}
+
+	
 
 	return false;
 }

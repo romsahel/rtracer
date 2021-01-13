@@ -84,6 +84,18 @@
     <ClInclude Include="src\gui\selection_overlay.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\core\aabb.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\bvh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\materials\texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\materials\object_store.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="NatvisFile.natvis" />

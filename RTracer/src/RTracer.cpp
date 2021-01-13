@@ -34,14 +34,17 @@ int main()
 
 	world world;
 
-	material& selection_material = world.add_material<lambertian_material>("Selection material", color(1.0, 0.0, 0.0));
-	world.add_material<dielectric_material>("Glass", 1.5);
-	world.add_material<metal_material>("Shiny chrome metal", color(0.8, 0.8, 0.8), 0.05);
-	world.add_material<metal_material>("Gold Rough metal", color(0.8, 0.6, 0.2), 0.6);
-	world.add_material<metal_material>("Shiny green metal", color(0.1, 0.8, 0.1), 0.05);
-	world.add_material<metal_material>("Rough yellow metal", color(0.0, 0.8, 0.8), 0.3);
-	world.add_material<lambertian_material>("Diffuse blue", color(0.2, 1.0, 0.0));
-	world.add_material<lambertian_material>("Diffuse mauve", color(0.9, 0.69, 1.0));
+	object_store<material> materials = material_store();
+
+	material& selection_material = materials.add<lambertian_material>("Selection material", color(1.0, 0.0, 0.0));
+	materials.add<dielectric_material>("Glass", 1.5);
+	materials.add<metal_material>("Shiny chrome metal", color(0.8, 0.8, 0.8), 0.05);
+	materials.add<metal_material>("Gold Rough metal", color(0.8, 0.6, 0.2), 0.6);
+	materials.add<metal_material>("Shiny green metal", color(0.1, 0.8, 0.1), 0.05);
+	materials.add<metal_material>("Rough yellow metal", color(0.0, 0.8, 0.8), 0.3);
+	materials.add<lambertian_material>("Diffuse blue", color(0.2, 1.0, 0.0));
+	materials.add<lambertian_material>("Diffuse mauve", color(0.9, 0.69, 1.0));
+	materials.add<lambertian_material>("Checker", texture_store().add<checker_texture>(color::black(), color::white()));
 
 	auto& ground = world.add<sphere>("Ground", point3(0.0, -1.25 - 100, 0.0), 100);
 	//auto& ground = world.add<plane>("Ground", point3(0.0, -1.25, 0.0), direction3(0.0, 1.0, 0.0));
@@ -53,23 +56,27 @@ int main()
 		{
 			name[7] = static_cast<char>('0' + x);
 			name[8] = static_cast<char>('0' + z);
-			auto& obj = world.add<sphere>(name, point3(x * 2 + random::get<double>(-0.9, 0.9), 0.2, z * 2 + random::get<double>(-0.9, 0.9)), random::get<double>(0.2, 0.8));
-			obj.material = world.materials()[random::get<int>(1, static_cast<int>(world.materials().size()) - 1)];
+			auto& obj = world.add<sphere>(
+				name, point3(x * 2 + random::get<double>(-0.9, 0.9), 0.2, z * 2 + random::get<double>(-0.9, 0.9)),
+				random::get<double>(0.2, 0.8));
+			obj.material = materials[random::get<int>(1, static_cast<int>(materials.size()) - 1)];
 		}
 	}
 
 	world.signal_scene_change();
-	
+
 	gui::initialize_opengl();
 
 	raytrace_renderer raytrace_renderer{image_width, image_height};
 	selection_overlay selection_overlay{raytrace_renderer.current_render};
 
 	void* selection = nullptr;
+	void* material_selection = nullptr;
 	gui_image render_image{false};
 	bool pause_rendering = false;
 	long long last_render_time = 0;
 	int max_render_iteration = 1000;
+	bool mouse_over_hierarchy = false;
 
 	while (!glfwWindowShouldClose(gui::window))
 	{
@@ -104,11 +111,31 @@ int main()
 			{
 				selection_overlay.signal_change();
 			}
+
+			mouse_over_hierarchy = ImGui::IsWindowHovered();
+		}
+		ImGui::End();
+
+		if (ImGui::Begin("Materials"))
+		{
+			for (material* mat : materials)
+			{
+				add_to_hierarchy(mat, mat->name, &material_selection);
+			}
 		}
 		ImGui::End();
 
 		if (ImGui::Begin("Inspector"))
 		{
+			if (ImGui::BeginPopupContextWindow())
+			{
+				if (ImGui::MenuItem("Change material to selection", 0, false, selection != nullptr && material_selection != nullptr))
+				{
+					static_cast<hittable*>(selection)->material = static_cast<material*>(material_selection);
+					scene_changed = true;
+				}
+				ImGui::EndPopup();
+			}
 			scene_changed |= draw_inspector(camera, world, &selection);
 		}
 		ImGui::End();
@@ -130,7 +157,7 @@ int main()
 			const float width = ImGui::GetWindowSize().x;
 			const ImVec2 size = ImVec2(width, width / static_cast<float>(camera.aspect_ratio()));
 			ImGui::Image(render_image.texture_id(), size);
-			if (has_selection)
+			if (has_selection && mouse_over_hierarchy)
 			{
 				selection_overlay.draw_overlay(image_position, size);
 			}

@@ -20,11 +20,6 @@ public:
 		{
 			delete obj;
 		}
-
-		for (::material* mat : m_materials)
-		{
-			delete mat;
-		}
 	}
 
 	template <typename T, class... Args>
@@ -35,28 +30,14 @@ public:
 		return *added;
 	}
 
-	template <typename T, class... Args>
-	T& add_material(Args&&... args)
-	{
-		auto* added = new T(std::forward<Args>(args)...);
-		m_materials.push_back(added);
-		return *added;
-	}
-
 	void shallow_add(hittable* hittable)
 	{
 		m_list.push_back(hittable);
 	}
 
-	void shallow_add_material(::material* material)
-	{
-		m_materials.push_back(material);
-	}
-
 	void shallow_clear()
 	{
 		m_list.clear();
-		m_materials.clear();
 	}
 
 	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const
@@ -87,11 +68,6 @@ public:
 		return m_list;
 	}
 
-	const std::vector<material*>& materials() const
-	{
-		return m_materials;
-	}
-
 	void signal_scene_change()
 	{
 		m_bvh = new bvh_node(m_list, 0, m_list.size());
@@ -102,5 +78,4 @@ public:
 private:
 	hittable* m_bvh;
 	std::vector<hittable*> m_list;
-	std::vector<::material*> m_materials;
 };
