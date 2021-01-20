@@ -30,6 +30,11 @@ public:
 		return *added;
 	}
 
+	void remove(const std::vector<hittable*>::const_iterator& hittable)
+	{
+		m_list.erase(hittable);
+	}
+
 	void shallow_add(hittable* hittable)
 	{
 		m_list.push_back(hittable);

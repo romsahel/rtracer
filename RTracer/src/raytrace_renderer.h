@@ -9,10 +9,16 @@
 
 struct raytrace_settings
 {
+	raytrace_settings(int image_width, int image_height)
+		: image_width(image_width),
+		  image_height(image_height)
+	{
+	}
+
 	const int image_width;
 	const int image_height;
 
-	bool use_bvh;
+	bool use_bvh = true;
 };
 
 /// <summary>
@@ -48,7 +54,11 @@ struct raytrace_render_data
 	double iteration = 1.0;
 
 	int bounce_depth = 12;
-	color bounce_depth_limit_color = color::magenta();
+	color bounce_depth_limit_color = color::black();
+
+	color background_bottom_color = color::white();
+	color background_top_color = color(0.5, 0.7, 1.0);
+	double background_strength = 1.0;
 
 	void set_pixels_from(const raytrace_render_data& src)
 	{
@@ -62,8 +72,8 @@ public:
 	raytrace_renderer(int image_width, int image_height)
 		: settings{image_width, image_height}
 	{
-		const int channels_num = 3;
-		const int pixel_count = image_width * image_height;
+		const size_t channels_num = 3;
+		const size_t pixel_count = static_cast<size_t>(image_width) * image_height;
 
 		current_render.pixels.reserve(pixel_count);
 		empty_render.pixels.reserve(pixel_count);
@@ -100,7 +110,7 @@ public:
 	/// </summary>
 	void render(const camera& camera, const world& world)
 	{
-		render(camera, world, current_render, ray_color_with_gradient_sky);
+		render(camera, world, current_render);
 	}
 
 	using ray_color_provider = color(*)(const ray&, const ::world&, int, color);
@@ -109,26 +119,26 @@ public:
 	/// render to a custom render_data using a custom ray_color_provider.
 	/// Default one is ray_color_with_gradient_sky
 	/// </summary>
-	void render(const camera& camera, const world& world, raytrace_render_data& data, ray_color_provider ray_color) const
+	void render(const camera& camera, const world& world, raytrace_render_data& data) const
 	{
 		// render settings
 		const double inv_samples_per_pixel = 1.0 / data.iteration;
 		data.iteration++;
 
-		auto& settings = this->settings;
+		auto& raytrace_settings = this->settings;
 		auto& pixel_colors = data.colors;
-		auto bounce_depth = data.bounce_depth;
-		auto bounce_depth_limit_color = data.bounce_depth_limit_color;
 		std::for_each(
 			std::execution::par_unseq,
 			data.pixels.begin(),
 			data.pixels.end(),
 			[&pixel_colors, &world, &camera,
-				inv_samples_per_pixel, settings, bounce_depth, bounce_depth_limit_color, ray_color](raytrace_pixel& pixel)
+				inv_samples_per_pixel, raytrace_settings, data](raytrace_pixel& pixel)
 			{
-				const auto u = (pixel.x + random::get<double>()) / (static_cast<double>(settings.image_width) - 1);
-				const auto v = (pixel.y + random::get<double>()) / (static_cast<double>(settings.image_height) - 1);
-				pixel.color += ray_color(camera.compute_ray_to(u, v), world, bounce_depth, bounce_depth_limit_color);
+				const auto u = (pixel.x + random::get<double>()) / (static_cast<double>(raytrace_settings.image_width) -
+					1);
+				const auto v = (pixel.y + random::get<double>()) / (static_cast<double>(raytrace_settings.image_height)
+					- 1);
+				pixel.color += ray_color_with_gradient_sky(camera.compute_ray_to(u, v), world, data.bounce_depth, data);
 
 				// convert pixel.color into image-readable ascii pixel_colors
 				pixel_colors[pixel.index] = to_writable_color(pixel.color.x(), inv_samples_per_pixel);
@@ -137,59 +147,37 @@ public:
 			});
 	}
 
-	/// <summary>
-	/// return the color for the given raycast, using a blue-gradient sky (when the raycast returns no hit)
-	/// </summary>
-	static color ray_color_with_gradient_sky(const ray& raycast, const world& world, int depth, color bounce_depth_limit_color)
-	{
-		color value;
-		if (base_ray_color(raycast, world, depth, bounce_depth_limit_color, value, ray_color_with_gradient_sky)) return value;
-
-		const double t = 0.5 * (raycast.direction().y() + 1.0);
-		return color((1.0 - t) * color(1.0, 1.0, 1.0) + t * color(0.5, 0.7, 1.0));
-	}
-	
-	/// <summary>
-	/// return the color for the given raycast, using a black solid-color sky (when the raycast returns no hit)
-	/// </summary>
-	static color ray_color_for_mask(const ray& raycast, const world& world, int depth, color bounce_depth_limit_color)
-	{
-		color value;
-		if (base_ray_color(raycast, world, depth, bounce_depth_limit_color, value, ray_color_with_gradient_sky)) return value;
-
-		return color::black();
-	}
-
 	raytrace_settings settings;
 	raytrace_render_data current_render;
 	raytrace_render_data empty_render;
 
 private:
-	static bool base_ray_color(const ray& raycast, const world& world, int depth, color bounce_depth_limit_color, color& value,
-	                           ray_color_provider ray_color)
+	/// <summary>
+	/// return the color for the given raycast, using a blue-gradient sky (when the raycast returns no hit)
+	/// </summary>
+	static color ray_color_with_gradient_sky(const ray& raycast, const world& world, int depth,
+	                                         const raytrace_render_data& settings)
 	{
 		if (depth <= 0)
 		{
-			value = bounce_depth_limit_color;
-			return true;
+			return settings.bounce_depth_limit_color;
 		}
 
+		hit_info hit{&lambertian_material::default_material()};
+		if (!world.hit(raycast, 0.001, constants::infinity, hit))
+		{
+			const double t = 0.5 * (raycast.direction().y() + 1.0);
+			return color(((1.0 - t) * settings.background_bottom_color + t * settings.background_top_color) * settings.background_strength);
+		}
+		
 		color attenuation;
 		ray scattered;
-		hit_info hit{&lambertian_material::default_material()};
-		if (world.hit(raycast, 0.001, infinity, hit))
+		const color emitted = hit.material->emitted(hit.uv_coordinates, hit.point);
+		if (hit.material->scatter(raycast, hit, attenuation, scattered))
 		{
-			if (hit.material->scatter(raycast, hit, attenuation, scattered))
-			{
-				value = color(mul(attenuation, ray_color(scattered, world, depth - 1, bounce_depth_limit_color)));
-			}
-			else
-			{
-				value = color::black();
-			}
-
-			return true;
+			return color(emitted + mul(attenuation, ray_color_with_gradient_sky(scattered, world, depth - 1, settings)));
 		}
-		return false;
+
+		return emitted;
 	}
 };

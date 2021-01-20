@@ -9,14 +9,21 @@ using uint = unsigned int;
  * Constants 
  */
 
-// double infinity
-const double infinity = std::numeric_limits<double>::infinity();
-// double pi
-const double pi = 3.1415926535897932385;
-// double smallest value
-const double epsilon = 0.0001;
-// double 1/180
-const double inv_180 = 1 / 180.0;
+namespace constants
+{
+	// double infinity
+	const double infinity = std::numeric_limits<double>::infinity();
+
+	// double pi
+	const double pi = 3.1415926535897932385;
+	const double inv_pi = 1.0 / pi;
+
+	// double smallest value
+	const double epsilon = 0.0001;
+
+	// double 1/180
+	const double inv_180 = 1 / 180.0;
+}
 
 /*
  * Utility functions
@@ -25,7 +32,7 @@ const double inv_180 = 1 / 180.0;
 // convert given degrees to radians
 inline double degrees_to_radians(double degrees)
 {
-	return degrees * pi * inv_180;
+	return degrees * constants::pi * constants::inv_180;
 }
 
 // clamp given double value from min to max
@@ -46,12 +53,12 @@ namespace random
 		if constexpr (std::_Is_any_of_v<T, float, double, long double>)
 		{
 			std::uniform_real_distribution<T> distribution(min, max);
-			return distribution(generator);	
+			return distribution(generator);
 		}
 		else
 		{
 			std::uniform_int_distribution<T> distribution(min, max);
-			return distribution(generator);	
+			return distribution(generator);
 		}
 	}
 }

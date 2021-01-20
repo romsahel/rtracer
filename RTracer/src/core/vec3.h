@@ -32,6 +32,11 @@ struct vec3
 		return m_xyz[index];
 	}
 
+	double& operator[](int index)
+	{
+		return m_xyz[index];
+	}
+
 	vec3 operator-() const
 	{
 		return vec3(-m_xyz[0], -m_xyz[1], -m_xyz[2]);
@@ -76,8 +81,8 @@ struct vec3
 
 	bool is_near_zero() const
 	{
-		const static auto epsilon = 1e-8;
-		return fabs(m_xyz[0]) < epsilon && fabs(m_xyz[1]) < epsilon && fabs(m_xyz[2]) < epsilon;
+		const static auto e = 1e-8;
+		return fabs(m_xyz[0]) < e && fabs(m_xyz[1]) < e && fabs(m_xyz[2]) < e;
 	}
 
 	// return a random vec3

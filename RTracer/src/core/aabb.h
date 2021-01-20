@@ -30,6 +30,16 @@ public:
 		return aabb(small, big);
 	}
 
+	void encapsulate(const point3& p)
+	{
+		minimum = point3(fmin(minimum.x(), p.x()),
+		                 fmin(minimum.y(), p.y()),
+		                 fmin(minimum.z(), p.z()));
+		maximum = point3(fmax(maximum.x(), p.x()),
+		                 fmax(maximum.y(), p.y()),
+		                 fmax(maximum.z(), p.z()));
+	}
+
 	bool hit(const ray& r, double t_min, double t_max) const
 	{
 		const point3 origin = r.origin();

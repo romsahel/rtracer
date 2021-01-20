@@ -73,3 +73,13 @@ inline vec3 refract(const vec3& uv, const vec3& n, double refraction_ratio)
 	const vec3 r_out_parallel = -sqrt(fabs(1.0 - r_out_perp.length_squared())) * n;
 	return r_out_perp + r_out_parallel;
 }
+
+inline double sum(const vec3& v)
+{
+	return v.x() + v.y() + v.z();
+}
+
+inline vec3 abs(const vec3& v)
+{
+	return vec3{std::abs(v.x()), std::abs(v.y()), std::abs(v.z())};
+}

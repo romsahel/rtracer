@@ -15,7 +15,7 @@ public:
 	{
 	}
 
-	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const override
+	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) override
 	{
 		vec3 oc = ray.origin() - center;
 		double a = ray.direction().length_squared();
@@ -41,7 +41,8 @@ public:
 				const direction3 outward_normal = direction3((info.point - center) / radius);
 				info.set_face_normal(ray, outward_normal);
 				info.material = material;
-				set_uv_at(info.point, info.uv_coordinates);
+				set_uv_at(outward_normal, info.uv_coordinates);
+				info.object = this;
 			}
 		}
 
@@ -59,7 +60,7 @@ public:
 	double radius;
 
 private:
-	static void set_uv_at(const point3& p, vec3& uv_coordinates)
+	static void set_uv_at(const vec3& p, vec3& uv_coordinates)
 	{
 		// p: a given point on the sphere of radius one, centered at the origin.
 		// u: returned value [0,1] of angle around the Y axis from X=-1.
@@ -69,8 +70,8 @@ private:
 		//     <0 0 1> yields <0.25 0.50>       < 0  0 -1> yields <0.75 0.50>
 
 		const double theta = acos(-p.y());
-		const double phi = atan2(-p.z(), p.x()) + pi;
-		uv_coordinates.x() = phi / (2 * pi);
-		uv_coordinates.y() = theta / pi;
+		const double phi = atan2(-p.z(), p.x()) + constants::pi;
+		uv_coordinates.x() = phi / (2 * constants::pi);
+		uv_coordinates.y() = theta * constants::inv_pi;
 	}
 };

@@ -24,7 +24,7 @@ public:
 	ray compute_ray_to(double x_pixel, double y_pixel) const
 	{
 		vec3 offset = 0.0;
-		if (aperture > epsilon)
+		if (aperture > constants::epsilon)
 		{
 			const vec3 disk = aperture * 2.0 * vec3::random_in_unit_disk();
 			offset = m_u * disk.x() + m_v * disk.y();

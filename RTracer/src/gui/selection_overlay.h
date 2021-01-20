@@ -16,6 +16,8 @@ public:
 		m_render = raytrace_render_data(base);
 		m_render.bounce_depth = 1;
 		m_render.bounce_depth_limit_color = color::white();
+		m_render.background_bottom_color = color::black();
+		m_render.background_top_color = color::black();
 	}
 
 	void signal_change()
@@ -33,7 +35,7 @@ public:
 	void draw_overlay(ImVec2 image_position, ImVec2 size)
 	{
 		if (!has_valid_render()) return;
-		
+
 		ImGui::SetCursorPos(image_position);
 		ImGui::Image(m_image.texture_id(), size);
 	}
@@ -42,23 +44,21 @@ public:
 	// with minimal bounce depth and a solid-white sky to produce a black and white mask
 	void render(void* selection, material& selection_material, const camera& camera, const raytrace_renderer& renderer)
 	{
-		auto* hittable_selection = static_cast<hittable*>(selection);
+		if (has_valid_render()) return;
 
+		auto* hittable_selection = static_cast<hittable*>(selection);
 		material* saved_material = hittable_selection->material;
 		hittable_selection->material = &selection_material;
 		m_world.shallow_add(hittable_selection);
-		m_world.signal_scene_change();
 
+		m_world.signal_scene_change();
 		m_render.set_pixels_from(renderer.empty_render);
 		m_render.iteration = 10.0;
 
-		for (size_t i = 0; i < 1; i++)
-		{
-			renderer.render(camera, m_world, m_render, raytrace_renderer::ray_color_for_mask);
-		}
+		renderer.render(camera, m_world, m_render);
 
 		m_image.update(renderer.settings.image_width, renderer.settings.image_height,
-		                       m_render.colors.data());
+		               m_render.colors.data());
 
 		hittable_selection->material = saved_material;
 		m_world.shallow_clear();

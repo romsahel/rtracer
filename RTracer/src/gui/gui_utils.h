@@ -84,4 +84,53 @@ namespace gui
 			value = static_cast<double>(tmp);
 		return changed;
 	}
+
+	bool draw_doubles(const char* label, double& value1, double& value2, float speed = 0.1f, float v_min = 0.0f,
+	                  float v_max = 0.0f)
+	{
+		static float values[3];
+		values[0] = static_cast<float>(value1);
+		values[1] = static_cast<float>(value2);
+
+		ImGui::PushID(&value1);
+		const bool changed = ImGui::DragFloat2(label, values, speed, v_min, v_max);
+		ImGui::PopID();
+
+		if (changed)
+		{
+			value1 = static_cast<double>(values[0]);
+			value2 = static_cast<double>(values[1]);
+		}
+
+		return changed;
+	}
+
+	void push_disabled(bool disabled)
+	{
+		if (disabled)
+		{
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+	}
+
+	void pop_disabled(bool disabled)
+	{
+		if (disabled)
+		{
+			ImGui::PopStyleVar();
+		}
+	}
+
+	void help_marker(const char* description)
+	{
+		ImGui::TextDisabled("(?)");
+		if (ImGui::IsItemHovered())
+		{
+			ImGui::BeginTooltip();
+			ImGui::PushTextWrapPos(450.0f);
+			ImGui::TextUnformatted(description);
+			ImGui::PopTextWrapPos();
+			ImGui::EndTooltip();
+		}
+	}
 }

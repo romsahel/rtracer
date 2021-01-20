@@ -1,10 +1,12 @@
 ﻿#pragma once
 #include "camera.h"
+#include "gui_image.h"
 #include "gui_utils.h"
 #include "world.h"
-#include "geometry/plane.h"
+#include "core/rotate_y.h"
 #include "geometry/sphere.h"
 #include "materials/dieletric_material.h"
+#include "materials/image_texture.h"
 #include "materials/lambertian_material.h"
 #include "materials/metal_material.h"
 
@@ -31,15 +33,32 @@ inline bool draw_camera_inspector(camera& camera)
 inline bool draw_texture_inspector(const char* name, texture* texture)
 {
 	bool changed = false;
-	if (const auto cast = dynamic_cast<solid_color*>(texture); cast != nullptr)
+	if (auto* const color = dynamic_cast<solid_color*>(texture); color != nullptr)
 	{
-		changed |= gui::draw_color(name, cast->color_value);
+		changed |= gui::draw_color(name, color->color_value);
 	}
-	if (const auto cast = dynamic_cast<checker_texture*>(texture); cast != nullptr)
+	else if (auto* const checker = dynamic_cast<checker_texture*>(texture); checker != nullptr)
 	{
 		ImGui::Text(name);
-		changed |= draw_texture_inspector("Odd", cast->odd);
-		changed |= draw_texture_inspector("Even", cast->even);
+		changed |= draw_texture_inspector("Odd", checker->odd);
+		changed |= draw_texture_inspector("Even", checker->even);
+	}
+	else if (auto* const image = dynamic_cast<image_texture*>(texture); image != nullptr)
+	{
+		static gui_image img(false);
+		static image_texture* previous = nullptr;
+		static float ratio = 0.0f;
+		if (previous != image)
+		{
+			img.update(image->width, image->height, image->data);
+			ratio = static_cast<float>(image->height) / static_cast<float>(image->width);
+		}
+
+		ImGui::Text("%s (%dx%d)", name, image->width, image->height);
+
+		const float width = ImGui::GetWindowSize().x - 5.0f;
+		const ImVec2 size = ImVec2(width, width * ratio);
+		ImGui::Image(img.texture_id(), size);
 	}
 	return changed;
 }
@@ -47,7 +66,8 @@ inline bool draw_texture_inspector(const char* name, texture* texture)
 inline bool draw_material_inspector(lambertian_material* material)
 {
 	bool changed = false;
-	changed |= draw_texture_inspector("Albedo", material->albedo);
+	ImGui::Text("Albedo");
+	changed |= draw_texture_inspector("Texture", material->albedo);
 	return changed;
 }
 
@@ -63,43 +83,67 @@ inline bool draw_material_inspector(dielectric_material* material)
 {
 	bool changed = false;
 	double ior = material->index_of_refraction();
-	if ((changed |= gui::draw_double("Index of refraction", ior, 0.01f, 1.0f)))
+	if ((changed |= gui::draw_double("Index of refraction", ior, 0.01f, 1.0f)), changed)
 		material->index_of_refraction(ior);
 	return changed;
 }
 
 inline bool draw_material_inspector(material* material)
 {
+	bool changed = false;
 	if (ImGui::CollapsingHeader(material->name, ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		if (const auto cast = dynamic_cast<lambertian_material*>(material); cast != nullptr)
-			return draw_material_inspector(cast);
-		if (const auto cast = dynamic_cast<metal_material*>(material); cast != nullptr)
-			return draw_material_inspector(cast);
-		if (const auto cast = dynamic_cast<dielectric_material*>(material); cast != nullptr)
-			return draw_material_inspector(cast);
+		if (auto* const lambertian = dynamic_cast<lambertian_material*>(material); lambertian != nullptr)
+			changed |= draw_material_inspector(lambertian);
+		else if (auto* const metal = dynamic_cast<metal_material*>(material); metal != nullptr)
+			changed |= draw_material_inspector(metal);
+		else if (auto* const dielectric = dynamic_cast<dielectric_material*>(material); dielectric != nullptr)
+			changed |= draw_material_inspector(dielectric);
+
+		ImGui::Text("Emission");
+		changed |= draw_texture_inspector("Texture", material->emission);
+		changed |= gui::draw_double("Strength", material->emission_strength);
 	}
 
-	
-
-	return false;
+	return changed;
 }
+
+bool draw_hittable_inspector(hittable* hittable);
 
 inline bool draw_hittable_inspector(sphere* hittable)
 {
 	bool changed = false;
 	changed |= gui::draw_vec3("Center", hittable->center);
 	changed |= gui::draw_double("Radius", hittable->radius, 0.1f, 0.01f);
-	changed |= draw_material_inspector(hittable->material);
 	return changed;
 }
 
-inline bool draw_hittable_inspector(plane* hittable)
+inline bool draw_hittable_inspector(xy_rect* hittable)
 {
 	bool changed = false;
-	changed |= gui::draw_vec3("Point", hittable->point);
-	changed |= gui::draw_vec3("Normal", hittable->normal);
-	changed |= draw_material_inspector(hittable->material);
+	changed |= gui::draw_vec3("Center", hittable->center);
+	changed |= gui::draw_vec3("Rotation", hittable->rotation);
+	changed |= gui::draw_double("Width", hittable->width);
+	changed |= gui::draw_double("Height", hittable->height);
+	if (changed)
+		hittable->update();
+
+	ImGui::Separator();
+	aabb bbox;
+	hittable->bounding_box(bbox);
+	gui::draw_vec3("Minimum", bbox.minimum);
+	gui::draw_vec3("Maximum", bbox.maximum);
+	
+	return changed;
+}
+
+inline bool draw_hittable_inspector(rotate_y* hittable)
+{
+	bool changed = false;
+	changed |= draw_hittable_inspector(hittable->object);
+	changed |= gui::draw_double("y-rotation", hittable->angle);
+	if (changed)
+		hittable->update();
 	return changed;
 }
 
@@ -107,16 +151,18 @@ inline bool draw_hittable_inspector(hittable* hittable)
 {
 	if (ImGui::CollapsingHeader(hittable->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		if (auto cast = dynamic_cast<sphere*>(hittable); cast != nullptr)
+		if (auto* cast = dynamic_cast<sphere*>(hittable); cast != nullptr)
 			return draw_hittable_inspector(cast);
-		if (auto cast = dynamic_cast<plane*>(hittable); cast != nullptr)
+		if (auto* cast = dynamic_cast<xy_rect*>(hittable); cast != nullptr)
+			return draw_hittable_inspector(cast);
+		if (auto* cast = dynamic_cast<rotate_y*>(hittable); cast != nullptr)
 			return draw_hittable_inspector(cast);
 	}
 
 	return false;
 }
 
-inline bool draw_inspector(camera& camera, const world& world, void** selection)
+inline bool draw_inspector(camera& camera, void** selection)
 {
 	if (*selection == nullptr) return false;
 
@@ -149,12 +195,31 @@ inline void add_to_hierarchy(T* obj, const char* label, void** selection)
 	ImGui::TreePop();
 }
 
-inline void draw_hierarchy(camera& camera, const world& world, void** selection)
+inline void draw_hierarchy(camera& camera, world& world, void** selection)
 {
 	add_to_hierarchy(&camera, "Camera", selection);
 
-	for (hittable* obj : world.hittables())
+	const std::vector<hittable*>& objects = world.hittables();
+	auto it = objects.begin();
+	auto to_remove = objects.end();
+	for (hittable* obj : objects)
 	{
 		add_to_hierarchy(obj, obj->name.c_str(), selection);
+		if (ImGui::BeginPopupContextItem())
+		{
+			static char buf[256];
+			sprintf_s(buf, "Remove %s", obj->name.c_str());
+			if (ImGui::MenuItem(buf))
+			{
+				to_remove = it;
+			}
+			ImGui::EndPopup();
+		}
+		++it;
+	}
+
+	if (to_remove != objects.end())
+	{
+		world.remove(to_remove);
 	}
 }

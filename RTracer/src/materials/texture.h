@@ -6,7 +6,9 @@
 class texture
 {
 public:
-	virtual color value_at(vec3 uv_coordinates, const point3& p) const = 0;
+	virtual color value_at(const vec3& uv_coordinates, const point3& p) const = 0;
+
+	virtual ~texture() = default;
 };
 
 inline object_store<texture>& texture_store()
@@ -25,9 +27,21 @@ public:
 	{
 	}
 
-	color value_at(vec3 uv_coordinates, const point3& p) const override
+	color value_at(const vec3&, const point3&) const override
 	{
 		return color_value;
+	}
+
+	static solid_color* black()
+	{
+		static solid_color instance{color::black()};
+		return &instance;
+	}
+
+	static solid_color* white()
+	{
+		static solid_color instance{color::white()};
+		return &instance;
 	}
 };
 
@@ -46,7 +60,7 @@ public:
 	{
 	}
 
-	color value_at(vec3 uv_coordinates, const point3& p) const override
+	color value_at(const vec3& uv_coordinates, const point3& p) const override
 	{
 		const auto sines = sin(10 * p.x()) * sin(10 * p.y()) * sin(10 * p.z());
 		if (sines < 0)

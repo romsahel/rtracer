@@ -6,7 +6,9 @@
 #include "vec3_utility.h"
 #include "materials/material.h"
 
+class hittable;
 class aabb;
+
 /// <summary>
 /// contains information of how the light hits an hittable object
 /// </summary>
@@ -20,11 +22,13 @@ struct hit_info
 	double distance = -1.0;
 	// true if the raycast hit the object from its frontside ; false if it hit from the backside
 	bool front_face = false;
-	
+
 	// material of the hit object
 	material* material;
 	// uv coordinate of the material at the hitpoint
 	vec3 uv_coordinates;
+
+	hittable* object;
 
 	explicit hit_info(::material* material)
 		: material(material)
@@ -48,7 +52,7 @@ public:
 	explicit hittable(const char* name);
 	virtual ~hittable() = default;
 
-	virtual bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const = 0;
+	virtual bool hit(const ray& ray, double t_min, double t_max, hit_info& info) = 0;
 	virtual bool bounding_box(aabb& output_aabb) const = 0;
 
 	// name is used for ui and debug purposes

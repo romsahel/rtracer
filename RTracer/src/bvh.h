@@ -31,7 +31,7 @@ bool box_z_compare(const hittable* a, const hittable* b) { return box_compare(a,
 class bvh_node final : public hittable
 {
 public:
-	bvh_node(std::vector<hittable*>& objects, size_t start, size_t end) : hittable("BVH Node")
+	bvh_node(std::vector<hittable*> objects, size_t start, size_t end) : hittable("BVH Node")
 	{
 		// choose a comparison axis
 		int axis = random::get<int>(0, 2);
@@ -80,7 +80,7 @@ public:
 		box = aabb::surrounding(box_left, box_right);
 	}
 
-	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const override
+	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) override
 	{
 		if (box.hit(ray, t_min, t_max))
 		{
@@ -106,7 +106,7 @@ public:
 			delete right;
 	}
 
-	const hittable* left;
-	const hittable* right;
+	hittable* left;
+	hittable* right;
 	aabb box;
 };
