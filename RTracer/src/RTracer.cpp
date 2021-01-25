@@ -20,7 +20,6 @@
 #include "gui/selection_overlay.h"
 
 #include "raytrace_renderer.h"
-#include "serializable_node.h"
 #include "world.h"
 #include "core/rotate_y.h"
 #include "geometry/box.h"
@@ -28,80 +27,9 @@
 #include "materials/dieletric_material.h"
 #include "materials/image_texture.h"
 
-class inspector_serializer : public serializer
+
+camera make_cornell_scene(world& world, object_store<material>& materials)
 {
-public:
-	bool serialize_root(serializable_node_root* root) override
-	{
-		bool changed = false;
-		if (ImGui::CollapsingHeader(root->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			for (serializable_node_root* child : root->children)
-			{
-				changed |= child->visit(*this);
-			}
-		}
-
-		return changed;
-	}
-
-	bool serialize(const std::string& name, double* value) override
-	{
-		return gui::draw_double(name.c_str(), *value);
-	}
-
-	bool serialize(const std::string& name, vec3* value)
-	{
-		return gui::draw_vec3(name.c_str(), *value);
-	}
-
-	bool serialize(const std::string& name, color* value)
-	{
-		return gui::draw_color(name.c_str(), *value);
-	}
-};
-
-
-int main()
-{
-	double angle = 1.0;
-	auto n = serializable_node_root("root", {
-		                                new serializable_node<double>("angle", &angle, {})
-	                                });
-
-	world world;
-
-	object_store<material> materials = material_store();
-
-	material& selection_material = materials.add<lambertian_material>("Selection material", color(1.0, 0.0, 0.0));
-	materials.add<dielectric_material>("Glass", 1.5);
-	materials.add<metal_material>("Shiny chrome metal", color(0.8, 0.8, 0.8), 0.05);
-	materials.add<metal_material>("Gold Rough metal", color(0.8, 0.6, 0.2), 0.6);
-	materials.add<metal_material>("Shiny green metal", color(0.1, 0.8, 0.1), 0.05);
-	materials.add<metal_material>("Rough yellow metal", color(0.0, 0.8, 0.8), 0.3);
-	materials.add<lambertian_material>("Diffuse blue", color(0.2, 1.0, 0.0));
-	materials.add<lambertian_material>("Diffuse mauve", color(0.9, 0.69, 1.0));
-	auto& checker_tex = texture_store().add<checker_texture>(color::black(), color::white());
-	materials.add<lambertian_material>("Checker", checker_tex);
-	materials.add<lambertian_material>("Earth", texture_store().add<image_texture>("earthmap.jpg"));
-
-	//world.add<sphere>("Ground", point3(0.0, -1.25 - 100, 0.0), 100);
-
-	//char name[] = "Sphere 00";
-	//for (int z = 0; z < 1; z++)
-	//{
-	//	int x_span = 6;
-	//	for (int x = 0; x < x_span; x++)
-	//	{
-	//		name[7] = static_cast<char>('0' + z);
-	//		name[8] = static_cast<char>('0' + x);
-	//		auto& obj = world.add<sphere>(
-	//			name, point3((x - x_span * 0.5), 0.2, (z + 1.0)),
-	//			0.3);
-	//		obj.material = materials[random::get<size_t>(1, materials.size()) - 1];
-	//	}
-	//}
-
 	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
 	light_material.emission = solid_color::white();
 	light_material.emission_strength = 1.0;
@@ -159,22 +87,79 @@ int main()
 	frontbox.position.y() += frontbox_size.y() * 0.5;
 	frontbox.update();
 
-	world.signal_scene_change();
-
-	gui::initialize_opengl();
-
-	// camera settings
-	camera camera(4.0 / 3.0);
+	::camera camera{4.0 / 3.0};
 	camera.origin = point3(0.0, cornell_height * 0.5, -45);
 	camera.target = point3(0.0, cornell_height * 0.5 * 0.85, 0.0);
 	camera.vertical_fov = 40.0;
+	return camera;
+}
+
+camera make_sphere_scene(world& world, object_store<material>& materials)
+{
+	materials.add<dielectric_material>("Glass", 1.5);
+	materials.add<metal_material>("Shiny chrome metal", color(0.8, 0.8, 0.8), 0.05);
+	materials.add<metal_material>("Gold Rough metal", color(0.8, 0.6, 0.2), 0.6);
+	materials.add<metal_material>("Shiny green metal", color(0.1, 0.8, 0.1), 0.05);
+	materials.add<metal_material>("Rough yellow metal", color(0.0, 0.8, 0.8), 0.3);
+	materials.add<lambertian_material>("Diffuse blue", color(0.2, 1.0, 0.0));
+	materials.add<lambertian_material>("Diffuse mauve", color(0.9, 0.69, 1.0));
+	auto& checker_tex = texture_store().add<checker_texture>(color::black(), color::white());
+	materials.add<lambertian_material>("Checker", checker_tex);
+	materials.add<lambertian_material>("Earth", texture_store().add<image_texture>("earthmap.jpg"));
+
+	world.add<sphere>("Ground", point3(0.0, -1.25 - 100, 0.0), 100);
+
+	char name[] = "Sphere 00";
+	for (int z = 0; z < 10; z++)
+	{
+		int x_span = 6;
+		for (int x = 0; x < x_span; x++)
+		{
+			name[7] = static_cast<char>('0' + z);
+			name[8] = static_cast<char>('0' + x);
+			auto& obj = world.add<sphere>(
+				name, point3((x - x_span * 0.5), 0.2, (z + 1.0)),
+				0.3);
+			obj.material = materials[random::get<size_t>(1, materials.size()) - 1];
+		}
+	}
+	
+	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
+	light_material.emission = solid_color::white();
+	light_material.emission_strength = 1.0;
+	auto& light = world.add<rectangle>("Light", point3(0.0, 3.0, 5.0), 3.0, 3.0);
+	light.right_axis(2);
+	light.material = &light_material;
+	light.update();
+	
+	::camera camera{16.0 / 9.0};
+	camera.origin = point3(-0.25, 3.0, -0.5);
+	camera.target = point3(-0.25, 0.0, 3.0);
+	camera.vertical_fov = 60.0;
+	return camera;
+}
+
+int main()
+{
+	world world;
+
+	object_store<material> materials = material_store();
+
+	//camera camera = make_sphere_scene(world, materials); // average: 38ms
+	camera camera = make_cornell_scene(world, materials); // average: 133ms
 	camera.update();
+
+	material& selection_material = materials.add<lambertian_material>("Selection material", color(1.0, 0.0, 0.0));
+
+	world.signal_scene_change();
+
+	gui::initialize_opengl();
 
 	// output settings
 	const int image_width = 400;
 	const int image_height = static_cast<int>(image_width / camera.aspect_ratio());
 	raytrace_renderer raytrace_renderer{image_width, image_height};
-	raytrace_renderer.current_render.background_strength = 0.05 * 10.0;
+	raytrace_renderer.current_render.background_strength = 0.05;
 
 	selection_overlay selection_overlay{raytrace_renderer.current_render};
 
@@ -183,8 +168,10 @@ int main()
 	gui_image render_image{false};
 	bool pause_rendering = false;
 	long long last_render_time = 0;
+	long long total_render_time = 0;
+	long long average_render_time = 0;
 	int max_render_iteration = 1000;
-#if _DEBUG
+#ifdef _DEBUG
 	max_render_iteration = 2;
 #endif
 	bool mouse_over_hierarchy = false;
@@ -199,9 +186,24 @@ int main()
 		bool scene_changed = false;
 		if (ImGui::Begin("Render"))
 		{
-			ImGui::Text("Render: %d / %d (%llums)",
+			if (is_rendering)
+			{
+				if (raytrace_renderer.current_render.iteration < 3.0)
+				{
+					total_render_time = 0;
+				}
+
+				total_render_time += last_render_time;
+				average_render_time = static_cast<long long>(
+					static_cast<double>(total_render_time) / (raytrace_renderer.current_render.iteration - 1.0)
+				);
+			}
+
+
+			ImGui::Text("Render: %d / %d (last: %llums ; avg: %llums)",
 			            static_cast<int>(raytrace_renderer.current_render.iteration),
-			            max_render_iteration, last_render_time);
+			            max_render_iteration, last_render_time,
+			            average_render_time);
 			ImGui::SameLine();
 			if (pause_rendering ? ImGui::Button("Resume rendering") : ImGui::Button("Pause rendering"))
 			{
@@ -252,38 +254,35 @@ int main()
 
 		if (ImGui::Begin("Inspector"))
 		{
-			inspector_serializer inspector;
-			inspector.serialize_root(&n);
-			
-			//scene_changed |= draw_inspector(camera, &selection);
+			scene_changed |= draw_inspector(camera, &selection);
 
-			//material* mat = nullptr;
-			//if (material_selection != nullptr && !is_hierarchy_focused)
-			//{
-			//	mat = static_cast<material*>(material_selection);
-			//}
-			//else if (selection != nullptr && selection != &camera)
-			//{
-			//	mat = *get_selection_material(selection);
-			//}
+			material* mat = nullptr;
+			if (material_selection != nullptr && !is_hierarchy_focused)
+			{
+				mat = static_cast<material*>(material_selection);
+			}
+			else if (selection != nullptr && selection != &camera)
+			{
+				mat = *get_selection_material(selection);
+			}
 
-			//if (mat != nullptr)
-			//{
-			//	ImGui::NewLine();
-			//	ImGui::Separator();
-			//	ImGui::Text("Material Inspector");
-			//	const bool has_selection = selection != nullptr && material_selection != nullptr;
-			//	if (has_selection)
-			//	{
-			//		ImGui::SameLine();
-			//		if (ImGui::Button("Assign to selection"))
-			//		{
-			//			*get_selection_material(selection) = static_cast<material*>(material_selection);
-			//			scene_changed = true;
-			//		}
-			//	}
-			//	scene_changed |= draw_material_inspector(mat);
-			//}
+			if (mat != nullptr)
+			{
+				ImGui::NewLine();
+				ImGui::Separator();
+				ImGui::Text("Material Inspector");
+				const bool has_selection = selection != nullptr && material_selection != nullptr;
+				if (has_selection)
+				{
+					ImGui::SameLine();
+					if (ImGui::Button("Assign to selection"))
+					{
+						*get_selection_material(selection) = static_cast<material*>(material_selection);
+						scene_changed = true;
+					}
+				}
+				scene_changed |= draw_material_inspector(mat);
+			}
 		}
 		ImGui::End();
 

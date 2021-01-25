@@ -57,3 +57,36 @@ struct serializable_node : serializable_node_root
 
 	TValue* value;
 };
+
+class inspector_serializer : public serializer
+{
+public:
+	bool serialize_root(serializable_node_root* root) override
+	{
+		bool changed = false;
+		if (ImGui::CollapsingHeader(root->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			for (serializable_node_root* child : root->children)
+			{
+				changed |= child->visit(*this);
+			}
+		}
+
+		return changed;
+	}
+
+	bool serialize(const std::string& name, double* value) override
+	{
+		return gui::draw_double(name.c_str(), *value);
+	}
+
+	bool serialize(const std::string& name, vec3* value)
+	{
+		return gui::draw_vec3(name.c_str(), *value);
+	}
+
+	bool serialize(const std::string& name, color* value)
+	{
+		return gui::draw_color(name.c_str(), *value);
+	}
+};
