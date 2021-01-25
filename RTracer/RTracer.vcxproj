@@ -187,7 +187,8 @@
     <ClInclude Include="src\core\rotate_y.h" />
     <ClInclude Include="src\core\vec3_utility.h" />
     <ClInclude Include="src\core\gl_includer.h" />
-    <ClInclude Include="src\geometry\xy_rect.h" />
+    <ClInclude Include="src\geometry\box.h" />
+    <ClInclude Include="src\geometry\rectangle.h" />
     <ClInclude Include="src\gui\gui_base_inspectors.h" />
     <ClInclude Include="src\gui\gui_initializer.h" />
     <ClInclude Include="src\gui\gui_utils.h" />
@@ -205,6 +206,7 @@
     <ClInclude Include="src\materials\texture.h" />
     <ClInclude Include="src\raytrace_renderer.h" />
     <ClInclude Include="src\gui\selection_overlay.h" />
+    <ClInclude Include="src\serializable_node.h" />
     <ClInclude Include="src\world.h" />
   </ItemGroup>
   <ItemGroup>

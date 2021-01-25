@@ -4,6 +4,7 @@
 #include "gui_utils.h"
 #include "world.h"
 #include "core/rotate_y.h"
+#include "geometry/box.h"
 #include "geometry/sphere.h"
 #include "materials/dieletric_material.h"
 #include "materials/image_texture.h"
@@ -108,7 +109,15 @@ inline bool draw_material_inspector(material* material)
 	return changed;
 }
 
-bool draw_hittable_inspector(hittable* hittable);
+inline material** get_selection_material(void* selection)
+{
+	auto hittable = static_cast<::hittable*>(selection);
+	if (auto* cast = dynamic_cast<transform_root*>(hittable); cast != nullptr)
+		return &cast->object->material;
+	return &hittable->material;
+}
+
+bool draw_hittable_inspector(hittable* hittable, bool with_header);
 
 inline bool draw_hittable_inspector(sphere* hittable)
 {
@@ -118,44 +127,78 @@ inline bool draw_hittable_inspector(sphere* hittable)
 	return changed;
 }
 
-inline bool draw_hittable_inspector(xy_rect* hittable)
+inline bool draw_hittable_inspector(rectangle* hittable)
 {
 	bool changed = false;
-	changed |= gui::draw_vec3("Center", hittable->center);
-	changed |= gui::draw_vec3("Rotation", hittable->rotation);
+	changed |= gui::draw_vec3("Offset", hittable->position);
 	changed |= gui::draw_double("Width", hittable->width);
 	changed |= gui::draw_double("Height", hittable->height);
-	if (changed)
-		hittable->update();
 
-	ImGui::Separator();
-	aabb bbox;
-	hittable->bounding_box(bbox);
-	gui::draw_vec3("Minimum", bbox.minimum);
-	gui::draw_vec3("Maximum", bbox.maximum);
-	
+	if (ImGui::Button("Change orientation"))
+	{
+		hittable->right_axis((hittable->right_axis() + 1) % 3);
+		changed = true;
+	}
+	ImGui::SameLine();
+	bool flip = hittable->flip_normal < 0.0;
+	if (ImGui::Checkbox("Flip normal", &flip))
+	{
+		hittable->flip_normal = flip ? -1.0 : 1.0;
+		changed = true;
+	}
+
 	return changed;
 }
 
-inline bool draw_hittable_inspector(rotate_y* hittable)
+inline bool draw_hittable_inspector(box* hittable)
 {
 	bool changed = false;
-	changed |= draw_hittable_inspector(hittable->object);
-	changed |= gui::draw_double("y-rotation", hittable->angle);
-	if (changed)
-		hittable->update();
+	changed |= gui::draw_vec3("Width", hittable->size);
+
 	return changed;
 }
 
-inline bool draw_hittable_inspector(hittable* hittable)
+template <int axis>
+inline bool draw_hittable_inspector(rotate_base<axis>* hittable, const char* label)
 {
-	if (ImGui::CollapsingHeader(hittable->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	bool changed = false;
+	changed |= gui::draw_double(label, hittable->angle);
+	return changed;
+}
+
+inline bool draw_hittable_inspector(transform_root* hittable)
+{
+	bool changed = false;
+	if (auto* translation = dynamic_cast<translator*>(hittable); translation != nullptr)
+	{
+		changed |= gui::draw_vec3("Position", translation->position);
+	}
+	else
+	{
+		if (auto* cast = dynamic_cast<rotate_x*>(hittable); cast != nullptr)
+			changed |= draw_hittable_inspector(cast, "x-rotation");
+		if (auto* cast = dynamic_cast<rotate_y*>(hittable); cast != nullptr)
+			changed |= draw_hittable_inspector(cast, "y-rotation");
+		if (auto* cast = dynamic_cast<rotate_z*>(hittable); cast != nullptr)
+			changed |= draw_hittable_inspector(cast, "z-rotation");
+	}
+
+	changed |= draw_hittable_inspector(hittable->object, false);
+
+	return changed;
+}
+
+inline bool draw_hittable_inspector(hittable* hittable, bool with_header)
+{
+	if (!with_header || ImGui::CollapsingHeader(hittable->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		if (auto* cast = dynamic_cast<sphere*>(hittable); cast != nullptr)
 			return draw_hittable_inspector(cast);
-		if (auto* cast = dynamic_cast<xy_rect*>(hittable); cast != nullptr)
+		if (auto* cast = dynamic_cast<rectangle*>(hittable); cast != nullptr)
 			return draw_hittable_inspector(cast);
-		if (auto* cast = dynamic_cast<rotate_y*>(hittable); cast != nullptr)
+		if (auto* cast = dynamic_cast<box*>(hittable); cast != nullptr)
+			return draw_hittable_inspector(cast);
+		if (auto* cast = dynamic_cast<transform_root*>(hittable); cast != nullptr)
 			return draw_hittable_inspector(cast);
 	}
 
@@ -172,7 +215,22 @@ inline bool draw_inspector(camera& camera, void** selection)
 	}
 	else
 	{
-		return draw_hittable_inspector(static_cast<hittable*>(*selection));
+		auto hittable = static_cast<::hittable*>(*selection);
+		bool changed = draw_hittable_inspector(hittable, true);
+
+		if (changed)
+		{
+			hittable->update();
+		}
+
+		ImGui::Separator();
+		aabb bbox;
+		hittable->bounding_box(bbox);
+		gui::display_vec3("Minimum", bbox.minimum);
+		gui::display_vec3("Maximum", bbox.maximum);
+		gui::display_vec3("Size", bbox.size());
+
+		return changed;
 	}
 }
 
@@ -220,6 +278,11 @@ inline void draw_hierarchy(camera& camera, world& world, void** selection)
 
 	if (to_remove != objects.end())
 	{
+		if (*to_remove == *selection)
+		{
+			*selection = nullptr;
+		}
 		world.remove(to_remove);
+		world.signal_scene_change();
 	}
 }

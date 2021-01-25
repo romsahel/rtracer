@@ -99,10 +99,16 @@
     <ClInclude Include="external\stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\geometry\xy_rect.h">
+    <ClInclude Include="src\core\rotate_y.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\rotate_y.h">
+    <ClInclude Include="src\geometry\rectangle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\geometry\box.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\serializable_node.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

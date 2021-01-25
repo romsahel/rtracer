@@ -49,6 +49,11 @@ namespace gui
 		return vec3(static_cast<double>(value[0]), static_cast<double>(value[1]), static_cast<double>(value[2]));
 	}
 
+	void display_vec3(const char* label, const vec3& value)
+	{
+		ImGui::Text("%s: (%f, %f, %f)", label, value.x(), value.y(), value.z());
+	}
+
 	bool draw_vec3(const char* label, vec3& value, float speed = 0.1f)
 	{
 		ImGui::PushID(&value);

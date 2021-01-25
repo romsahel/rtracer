@@ -8,6 +8,8 @@ class aabb
 {
 public:
 	aabb()
+		: minimum(constants::infinity),
+		  maximum(-constants::infinity)
 	{
 	}
 
@@ -15,6 +17,31 @@ public:
 		: minimum(min),
 		  maximum(max)
 	{
+	}
+
+	aabb(const point3& center, const vec3& extent)
+		: minimum(constants::infinity)
+		, maximum(-constants::infinity)
+	{
+		for (int i = -1; i < 2; i += 2)
+		{
+			for (int j = -1; j < 2; j += 2)
+			{
+				for (int k = -1; k < 2; k += 2)
+				{
+					double x = center.x() + i * extent.x();
+					double y = center.y() + j * extent.y();
+					double z = center.z() + k * extent.z();
+
+					vec3 position{x,y,z};
+					for (int l = 0; l < 3; l++)
+					{
+						minimum[l] = fmin(minimum[l], position[l]);
+						maximum[l] = fmax(maximum[l], position[l]);
+					}
+				}
+			}
+		}
 	}
 
 	static aabb surrounding(aabb box0, aabb box1)
@@ -57,6 +84,16 @@ public:
 				return false;
 		}
 		return true;
+	}
+
+	vec3 size() const
+	{
+		return maximum - minimum;
+	}
+
+	vec3 extent() const
+	{
+		return size() * 0.5;
 	}
 
 	point3 minimum;

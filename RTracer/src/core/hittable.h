@@ -19,7 +19,7 @@ struct hit_info
 	// direction for the bouncing ray
 	direction3 normal;
 	// distance from the origin of the raycast to the hit point
-	double distance = -1.0;
+	double distance = constants::infinity;
 	// true if the raycast hit the object from its frontside ; false if it hit from the backside
 	bool front_face = false;
 
@@ -54,6 +54,10 @@ public:
 
 	virtual bool hit(const ray& ray, double t_min, double t_max, hit_info& info) = 0;
 	virtual bool bounding_box(aabb& output_aabb) const = 0;
+
+	virtual void update()
+	{
+	}
 
 	// name is used for ui and debug purposes
 	std::string name;

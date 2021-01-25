@@ -50,6 +50,11 @@ struct vec3
 		return *this;
 	}
 
+	vec3& operator-=(const vec3& v)
+	{
+		return this->operator+=(-v);
+	}
+
 	vec3& operator*=(double v)
 	{
 		m_xyz[0] *= v;

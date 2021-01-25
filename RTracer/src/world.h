@@ -27,12 +27,14 @@ public:
 	{
 		auto* added = new T(std::forward<Args>(args)...);
 		m_list.push_back(added);
+		added->update();
 		return *added;
 	}
 
-	void remove(const std::vector<hittable*>::const_iterator& hittable)
+	void remove(const std::vector<hittable*>::const_iterator& to_remove)
 	{
-		m_list.erase(hittable);
+		delete *to_remove;
+		m_list.erase(to_remove);
 	}
 
 	void shallow_add(hittable* hittable)
@@ -58,10 +60,7 @@ public:
 			bool has_hit = false;
 			for (const auto& hittable : m_list)
 			{
-				if (hittable->hit(ray, t_min, info.distance, info))
-				{
-					has_hit = true;
-				}
+				has_hit |= (hittable->hit(ray, t_min, info.distance, info));
 			}
 
 			return has_hit;
@@ -81,6 +80,6 @@ public:
 	bool use_bvh{true};
 
 private:
-	hittable* m_bvh;
+	hittable* m_bvh{nullptr};
 	std::vector<hittable*> m_list;
 };
