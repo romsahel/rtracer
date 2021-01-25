@@ -123,6 +123,19 @@ camera make_sphere_scene(world& world, object_store<material>& materials)
 			obj.material = materials[random::get<size_t>(1, materials.size()) - 1];
 		}
 	}
+
+	auto& wall_left = world.add<rectangle>("wall_left", point3(5.0, 0.0, 0.0), 5.0, 30.0);
+	wall_left.right_axis(1);
+	wall_left.update();
+
+	auto& wall_right = world.add<rectangle>("wall_right", point3(-5.0, 0.0, 0.0), 5.0, 30.0);
+	wall_right.right_axis(1);
+	wall_right.update();
+
+	auto& wall_top = world.add<rectangle>("wall_top", point3(0.0, 6.0, 0.0), 30.0, 30.0);
+	wall_top.right_axis(2);
+	wall_top.update();
+
 	
 	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
 	light_material.emission = solid_color::white();
@@ -145,8 +158,8 @@ int main()
 
 	object_store<material> materials = material_store();
 
-	//camera camera = make_sphere_scene(world, materials); // average: 38ms
-	camera camera = make_cornell_scene(world, materials); // average: 133ms
+	camera camera = make_sphere_scene(world, materials); // average: 179ms (bvh) - 184ms (no bvh)
+	//camera camera = make_cornell_scene(world, materials); // average: 133ms (bvh) - 105ms (no bvh)
 	camera.update();
 
 	material& selection_material = materials.add<lambertian_material>("Selection material", color(1.0, 0.0, 0.0));
