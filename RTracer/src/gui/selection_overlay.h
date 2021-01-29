@@ -14,10 +14,10 @@ public:
 	selection_overlay(const raytrace_render_data& base)
 	{
 		m_render = raytrace_render_data(base);
-		m_render.bounce_depth = 1;
-		m_render.bounce_depth_limit_color = color::white();
-		m_render.background_bottom_color = color::black();
-		m_render.background_top_color = color::black();
+		m_render.settings.bounce_depth = 1;
+		m_render.settings.bounce_depth_limit_color = color::white();
+		m_render.settings.background_bottom_color = color::black();
+		m_render.settings.background_top_color = color::black();
 	}
 
 	void signal_change()
@@ -46,22 +46,22 @@ public:
 	{
 		if (has_valid_render()) return;
 
-		auto* hittable_selection = static_cast<hittable*>(selection);
-		material* saved_material = hittable_selection->material;
-		hittable_selection->material = &selection_material;
-		m_world.shallow_add(hittable_selection);
+		//auto* hittable_selection = static_cast<hittable*>(selection);
+		//material* saved_material = hittable_selection->material;
+		//hittable_selection->material = &selection_material;
+		//m_world.shallow_add(hittable_selection);
 
-		m_world.signal_scene_change();
-		m_render.set_pixels_from(renderer.empty_render);
-		m_render.iteration = 10.0;
+		//m_world.signal_scene_change();
+		//m_render.set_pixels_from(renderer.empty_render);
+		//m_render.iteration = 10.0;
 
-		renderer.render(camera, m_world, m_render);
+		//renderer.render(camera, m_world, m_render);
 
-		m_image.update(renderer.settings.image_width, renderer.settings.image_height,
-		               m_render.colors.data());
+		//m_image.update(renderer.settings.image_width, renderer.settings.image_height,
+		//               m_render.colors.data());
 
-		hittable_selection->material = saved_material;
-		m_world.shallow_clear();
+		//hittable_selection->material = saved_material;
+		//m_world.shallow_clear();
 	}
 
 private:

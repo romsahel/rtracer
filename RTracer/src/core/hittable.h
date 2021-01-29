@@ -38,7 +38,7 @@ struct hit_info
 	// set both front_face and normal property using the raycast and the outward normal to compute
 	inline void set_face_normal(const ray& r, const direction3& outward_normal)
 	{
-		front_face = dot(r.direction(), outward_normal) < 0;
+		front_face = dot(r.direction, outward_normal) < 0;
 		normal = front_face ? outward_normal : direction3(-outward_normal);
 	}
 };
@@ -50,14 +50,6 @@ class hittable
 {
 public:
 	explicit hittable(const char* name);
-	virtual ~hittable() = default;
-
-	virtual bool hit(const ray& ray, double t_min, double t_max, hit_info& info) = 0;
-	virtual bool bounding_box(aabb& output_aabb) const = 0;
-
-	virtual void update()
-	{
-	}
 
 	// name is used for ui and debug purposes
 	std::string name;

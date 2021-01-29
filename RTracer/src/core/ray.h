@@ -11,8 +11,8 @@ public:
 	ray() = default;
 
 	ray(const point3& origin, const direction3& direction)
-		: m_origin(origin),
-		  m_direction(normalize(direction))
+		: origin(origin),
+		  direction(normalize(direction))
 	{
 	}
 
@@ -21,26 +21,9 @@ public:
 	/// </summary>
 	point3 at(double t) const
 	{
-		return point3(m_origin + m_direction * t);
+		return point3(origin + direction * t);
 	}
 
-	/// <summary>
-	/// the origin of the ray
-	/// </summary>
-	const point3& origin() const
-	{
-		return m_origin;
-	}
-	
-	/// <summary>
-	/// the direction of the ray
-	/// </summary>
-	const direction3& direction() const
-	{
-		return m_direction;
-	}
-
-private:
-	point3 m_origin;
-	direction3 m_direction;
+	point3 origin;
+	direction3 direction;
 };

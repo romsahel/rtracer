@@ -47,7 +47,7 @@ namespace random
 {
 	// return a random double from min to max
 	template <typename T>
-	inline T get(T min = 0, T max = 1)
+	inline T get(T min = 0.0, T max = 1.0)
 	{
 		static std::mt19937 generator;
 		if constexpr (std::_Is_any_of_v<T, float, double, long double>)
@@ -61,4 +61,12 @@ namespace random
 			return distribution(generator);
 		}
 	}
+
+	//template <typename T>
+	//inline double get()
+	//{
+	//	static std::mt19937 generator;
+	//	static std::uniform_real_distribution<T> distribution(0.0, 1.0);
+	//	return distribution(generator);
+	//}
 }
