@@ -21,16 +21,16 @@ public:
 	bool scatter(const ray& raycast, const hit_info& hit, color& attenuation, ray& scattered) const override
 	{
 		const double refraction_ratio = hit.front_face ? m_inv_index_of_refraction : m_index_of_refraction;
-		const double cos_theta = fmin(dot(-raycast.direction, hit.normal), 1.0);
+		const double cos_theta = fmin(dot(-raycast.direction(), hit.normal), 1.0);
 		const double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
 		if (refraction_ratio * sin_theta < 1.0 || reflectance(cos_theta, refraction_ratio) > random::get<double>())
 		{
-			const direction3 reflected = direction3(reflect(raycast.direction, hit.normal));
+			const direction3 reflected = direction3(reflect(raycast.direction(), hit.normal));
 			scattered = ray(hit.point, reflected);
 		}
 		else
 		{
-			const direction3 refracted = direction3(refract(raycast.direction, hit.normal, refraction_ratio));
+			const direction3 refracted = direction3(refract(raycast.direction(), hit.normal, refraction_ratio));
 			scattered = ray(hit.point, refracted);
 		}
 

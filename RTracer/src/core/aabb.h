@@ -69,8 +69,8 @@ public:
 
 	bool hit(const ray& r, double t_min, double t_max) const
 	{
-		const point3 origin = r.origin;
-		const direction3 direction = r.direction;
+		const point3 origin = r.origin();
+		const direction3 direction = r.direction();
 		for (int i = 0; i < 3; i++)
 		{
 			double inv_d = 1.0 / direction[i];

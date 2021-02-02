@@ -97,7 +97,7 @@ struct vec3
 	}
 
 	// return a random vec3 contained in a sphere placed at the origin and of a radius of 1
-	static vec3 random_in_unit_sphere(double sphere_angle = 2.0 * constants::pi);
+	static vec3 random_in_unit_sphere();
 	// return a random vec3 contained in a disk placed at the origin and of a radius of 1
 	static vec3 random_in_unit_disk();
 	// return a random vec3 contained in a hemisphere placed at the origin and of a radius of 1
