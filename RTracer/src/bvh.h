@@ -80,7 +80,7 @@ public:
 		box = aabb::surrounding(box_left, box_right);
 	}
 
-	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) override
+	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override
 	{
 		if (box.hit(ray, t_min, t_max))
 		{

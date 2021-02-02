@@ -46,7 +46,7 @@ namespace gui
 
 	inline vec3 float3_to_vec3(float* value)
 	{
-		return vec3(static_cast<double>(value[0]), static_cast<double>(value[1]), static_cast<double>(value[2]));
+		return vec3(static_cast<float>(value[0]), static_cast<float>(value[1]), static_cast<float>(value[2]));
 	}
 
 	void display_vec3(const char* label, const vec3& value)
@@ -78,7 +78,7 @@ namespace gui
 		return changed;
 	}
 
-	bool draw_double(const char* label, double& value, float speed = 0.1f, float v_min = 0.0f, float v_max = 0.0f)
+	bool draw_double(const char* label, float& value, float speed = 0.1f, float v_min = 0.0f, float v_max = 0.0f)
 	{
 		auto tmp = static_cast<float>(value);
 		ImGui::PushID(&value);
@@ -86,11 +86,11 @@ namespace gui
 		ImGui::PopID();
 
 		if (changed)
-			value = static_cast<double>(tmp);
+			value = static_cast<float>(tmp);
 		return changed;
 	}
 
-	bool draw_doubles(const char* label, double& value1, double& value2, float speed = 0.1f, float v_min = 0.0f,
+	bool draw_doubles(const char* label, float& value1, float& value2, float speed = 0.1f, float v_min = 0.0f,
 	                  float v_max = 0.0f)
 	{
 		static float values[3];
@@ -103,8 +103,8 @@ namespace gui
 
 		if (changed)
 		{
-			value1 = static_cast<double>(values[0]);
-			value2 = static_cast<double>(values[1]);
+			value1 = static_cast<float>(values[0]);
+			value2 = static_cast<float>(values[1]);
 		}
 
 		return changed;

@@ -32,82 +32,82 @@ camera make_cornell_scene(world& world, object_store<material>& materials)
 {
 	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
 	light_material.emission = solid_color::white();
-	light_material.emission_strength = 1.0;
+	light_material.emission_strength = 1.0f;
 
-	auto& cornell_red = materials.add<lambertian_material>("Cornell red", color(.65, .05, .05));
-	auto& cornell_white = materials.add<lambertian_material>("Cornell white", color(.73, .73, .73));
-	auto& cornell_green = materials.add<lambertian_material>("Cornell green", color(.12, .45, .15));
+	auto& cornell_red = materials.add<lambertian_material>("Cornell red", color(.65f, .05f, .05f));
+	auto& cornell_white = materials.add<lambertian_material>("Cornell white", color(.73f, .73f, .73f));
+	auto& cornell_green = materials.add<lambertian_material>("Cornell green", color(.12f, .45f, .15f));
 
-	double cornell_width = 30.0;
-	double cornell_height = 30.0;
-	auto& light = world.add<rectangle>("Light", point3(0.0, cornell_height * 0.5 - 1 + cornell_height * 0.5, 0.0), 10.0,
-	                                   10.0);
+	float cornell_width = 30.0f;
+	float cornell_height = 30.0f;
+	auto& light = world.add<rectangle>("Light", point3(0.0f, cornell_height * 0.5f - 1 + cornell_height * 0.5f, 0.0f), 10.0f,
+	                                   10.0f);
 	light.right_axis(2);
 	light.material = &light_material;
 	light.update();
 
-	auto& plane1 = world.add<rectangle>("Right wall", point3(-cornell_width * 0.5, cornell_height * 0.5, 0.0),
+	auto& plane1 = world.add<rectangle>("Right wall", point3(-cornell_width * 0.5f, cornell_height * 0.5f, 0.0f),
 	                                    cornell_height,
 	                                    cornell_width);
 	plane1.right_axis(1);
 	plane1.material = &cornell_red;
 	plane1.update();
-	auto& plane2 = world.add<rectangle>("Left wall", point3(cornell_width * 0.5, cornell_height * 0.5, 0.0),
+	auto& plane2 = world.add<rectangle>("Left wall", point3(cornell_width * 0.5f, cornell_height * 0.5f, 0.0),
 	                                    cornell_height, cornell_width);
 	plane2.right_axis(1);
 	plane2.material = &cornell_green;
 	plane2.update();
-	auto& plane3 = world.add<rectangle>("Top wall", point3(0.0, cornell_height * 0.5 + cornell_height * 0.5, 0.0),
+	auto& plane3 = world.add<rectangle>("Top wall", point3(0.0, cornell_height * 0.5f + cornell_height * 0.5f, 0.0),
 	                                    cornell_width, cornell_width);
 	plane3.right_axis(2);
 	plane3.material = &cornell_white;
 	plane3.update();
-	auto& plane4 = world.add<rectangle>("Bottom wall", point3(0.0, -cornell_height * 0.5 + cornell_height * 0.5, 0.0),
+	auto& plane4 = world.add<rectangle>("Bottom wall", point3(0.0, -cornell_height * 0.5f + cornell_height * 0.5f, 0.0),
 	                                    cornell_width,
 	                                    cornell_width);
 	plane4.right_axis(2);
 	plane4.material = &cornell_white;
 	plane4.update();
-	auto& plane5 = world.add<rectangle>("Back wall", point3(0.0, cornell_height * 0.5, cornell_width * 0.5),
+	auto& plane5 = world.add<rectangle>("Back wall", point3(0.0, cornell_height * 0.5f, cornell_width * 0.5f),
 	                                    cornell_width, cornell_height);
 	plane5.right_axis(0);
 	plane5.material = &cornell_white;
 	plane5.update();
 
-	auto backbox_size = vec3(cornell_height * 0.5 * 0.5, cornell_height * 0.5, cornell_height * 0.5 * 0.5);
+	auto backbox_size = vec3(cornell_height * 0.5f * 0.5f, cornell_height * 0.5f, cornell_height * 0.5f * 0.5f);
 	auto& backbox = world.add<translator>(new rotate_y(new box("Back box", backbox_size), 15.0));
-	backbox.position = point3(backbox_size.x() * 0.5, 0.0, cornell_width * 0.5 * 0.75 - backbox_size.z() * 0.5);
-	backbox.position.x() += 1.0;
-	backbox.position.y() += backbox_size.y() * 0.5;
+	backbox.position = point3(backbox_size.x() * 0.5f, 0.0, cornell_width * 0.5f * 0.75f - backbox_size.z() * 0.5f);
+	backbox.position.x() += 1.0f;
+	backbox.position.y() += backbox_size.y() * 0.5f;
 	backbox.update();
 
-	auto frontbox_size = vec3(cornell_height * 0.5 * 0.5);
+	auto frontbox_size = vec3(cornell_height * 0.5f * 0.5f);
 	auto& frontbox = world.add<translator>(new rotate_y(new box("Front box", frontbox_size), -18.0));
-	frontbox.position.x() -= frontbox_size.x() * 0.5 + 1.0;
-	frontbox.position.y() += frontbox_size.y() * 0.5;
+	frontbox.position.x() -= frontbox_size.x() * 0.5f + 1.0f;
+	frontbox.position.y() += frontbox_size.y() * 0.5f;
 	frontbox.update();
 
-	::camera camera{4.0 / 3.0};
-	camera.origin = point3(0.0, cornell_height * 0.5, -45);
-	camera.target = point3(0.0, cornell_height * 0.5 * 0.85, 0.0);
-	camera.vertical_fov = 40.0;
+	::camera camera{4.0f / 3.0f};
+	camera.origin = point3(0.0f, cornell_height * 0.5f, -45);
+	camera.target = point3(0.0f, cornell_height * 0.5f * 0.85f, 0.0f);
+	camera.vertical_fov = 40.0f;
 	return camera;
 }
 
 camera make_sphere_scene(world& world, object_store<material>& materials)
 {
-	materials.add<dielectric_material>("Glass", 1.5);
-	materials.add<metal_material>("Shiny chrome metal", color(0.8, 0.8, 0.8), 0.05);
-	materials.add<metal_material>("Gold Rough metal", color(0.8, 0.6, 0.2), 0.6);
-	materials.add<metal_material>("Shiny green metal", color(0.1, 0.8, 0.1), 0.05);
-	materials.add<metal_material>("Rough yellow metal", color(0.0, 0.8, 0.8), 0.3);
-	materials.add<lambertian_material>("Diffuse blue", color(0.2, 1.0, 0.0));
-	materials.add<lambertian_material>("Diffuse mauve", color(0.9, 0.69, 1.0));
+	materials.add<dielectric_material>("Glass", 1.5f);
+	materials.add<metal_material>("Shiny chrome metal", color(0.8f, 0.8f, 0.8f), 0.05f);
+	materials.add<metal_material>("Gold Rough metal", color(0.8f, 0.6f, 0.2f), 0.6f);
+	materials.add<metal_material>("Shiny green metal", color(0.1f, 0.8f, 0.1f), 0.05f);
+	materials.add<metal_material>("Rough yellow metal", color(0.0f, 0.8f, 0.8f), 0.3f);
+	materials.add<lambertian_material>("Diffuse blue", color(0.2f, 1.0f, 0.0f));
+	materials.add<lambertian_material>("Diffuse mauve", color(0.9f, 0.69f, 1.0f));
 	auto& checker_tex = texture_store().add<checker_texture>(color::black(), color::white());
 	materials.add<lambertian_material>("Checker", checker_tex);
 	materials.add<lambertian_material>("Earth", texture_store().add<image_texture>("earthmap.jpg"));
 
-	world.add<sphere>("Ground", point3(0.0, -1.25 - 100, 0.0), 100);
+	world.add<sphere>("Ground", point3(0.0f, -1.25f - 100.0f, 0.0f), 100.0f);
 
 	char name[] = "Sphere 00";
 	for (int z = 0; z < 10; z++)
@@ -118,37 +118,37 @@ camera make_sphere_scene(world& world, object_store<material>& materials)
 			name[7] = static_cast<char>('0' + z);
 			name[8] = static_cast<char>('0' + x);
 			auto& obj = world.add<sphere>(
-				name, point3((x - x_span * 0.5), 0.2, (z + 1.0)),
-				0.3);
+				name, point3((x - x_span * 0.5f), 0.2f, (z + 1.0f)),
+				0.3f);
 			obj.material = materials[random::get<size_t>(1, materials.size()) - 1];
 		}
 	}
 
-	auto& wall_left = world.add<rectangle>("wall_left", point3(5.0, 0.0, 0.0), 5.0, 30.0);
+	auto& wall_left = world.add<rectangle>("wall_left", point3(5.0f, 0.0f, 0.0f), 5.0f, 30.0f);
 	wall_left.right_axis(1);
 	wall_left.update();
 
-	auto& wall_right = world.add<rectangle>("wall_right", point3(-5.0, 0.0, 0.0), 5.0, 30.0);
+	auto& wall_right = world.add<rectangle>("wall_right", point3(-5.0f, 0.0f, 0.0f), 5.0f, 30.0f);
 	wall_right.right_axis(1);
 	wall_right.update();
 
-	auto& wall_top = world.add<rectangle>("wall_top", point3(0.0, 6.0, 0.0), 30.0, 30.0);
+	auto& wall_top = world.add<rectangle>("wall_top", point3(0.0f, 6.0f, 0.0f), 30.0f, 30.0f);
 	wall_top.right_axis(2);
 	wall_top.update();
 
 	
 	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
 	light_material.emission = solid_color::white();
-	light_material.emission_strength = 1.0;
-	auto& light = world.add<rectangle>("Light", point3(0.0, 3.0, 5.0), 3.0, 3.0);
+	light_material.emission_strength = 1.0f;
+	auto& light = world.add<rectangle>("Light", point3(0.0f, 3.0f, 5.0f), 3.0f, 3.0f);
 	light.right_axis(2);
 	light.material = &light_material;
 	light.update();
 	
-	::camera camera{16.0 / 9.0};
-	camera.origin = point3(-0.25, 3.0, -0.5);
-	camera.target = point3(-0.25, 0.0, 3.0);
-	camera.vertical_fov = 60.0;
+	::camera camera{16.0f / 9.0f};
+	camera.origin = point3(-0.25f, 3.0f, -0.5f);
+	camera.target = point3(-0.25f, 0.0f, 3.0f);
+	camera.vertical_fov = 60.0f;
 	return camera;
 }
 
@@ -158,11 +158,11 @@ int main()
 
 	object_store<material> materials = material_store();
 
-	camera camera = make_sphere_scene(world, materials); // average: 179ms (bvh) - 184ms (no bvh)
-	//camera camera = make_cornell_scene(world, materials); // average: 133ms (bvh) - 105ms (no bvh)
+	//camera camera = make_sphere_scene(world, materials); // average: 179ms (bvh) - 184ms (no bvh)
+	camera camera = make_cornell_scene(world, materials); // average: 133ms (bvh) - 105ms (no bvh)
 	camera.update();
 
-	material& selection_material = materials.add<lambertian_material>("Selection material", color(1.0, 0.0, 0.0));
+	material& selection_material = materials.add<lambertian_material>("Selection material", color(1.0f, 0.0, 0.0));
 
 	world.signal_scene_change();
 
@@ -172,7 +172,7 @@ int main()
 	const int image_width = 400;
 	const int image_height = static_cast<int>(image_width / camera.aspect_ratio());
 	raytrace_renderer raytrace_renderer{image_width, image_height};
-	raytrace_renderer.current_render.settings.background_strength = 0.05;
+	raytrace_renderer.current_render.settings.background_strength = 0.05f;
 
 	selection_overlay selection_overlay{raytrace_renderer.current_render};
 
@@ -189,7 +189,7 @@ int main()
 #endif
 	bool mouse_over_hierarchy = false;
 	bool is_hierarchy_focused;
-	vec3 viewer_mouse_pos{-1.0, -1.0, -1.0};
+	vec3 viewer_mouse_pos{-1.0f, -1.0f, -1.0f};
 
 	while (!glfwWindowShouldClose(gui::window))
 	{
@@ -211,9 +211,9 @@ int main()
 				total_render_time += last_render_time;
 				min_render_time = std::min(min_render_time, last_render_time);
 				max_render_time = std::max(max_render_time, last_render_time);
-				//average_render_time = static_cast<long long>((min_render_time + max_render_time) * 0.5);
+				//average_render_time = static_cast<long long>((min_render_time + max_render_time) * 0.5f);
 				average_render_time = static_cast<long long>(
-					static_cast<double>(total_render_time) / (raytrace_renderer.current_render.iteration - 1.0)
+					static_cast<float>(total_render_time) / (raytrace_renderer.current_render.iteration - 1.0f)
 				);
 			}
 
@@ -331,13 +331,13 @@ int main()
 				&& mouse_pos.x < rect_max.x && mouse_pos.y < rect_max.y
 				&& mouse_pos.x < rect_max.x && mouse_pos.y < rect_max.y)
 			{
-				viewer_mouse_pos.x() = ((mouse_pos.x - rect_min.x)) / static_cast<double>(size.x);
-				viewer_mouse_pos.y() = 1.0 - ((mouse_pos.y - rect_min.y)) / static_cast<double>(size.y);
+				viewer_mouse_pos.x() = ((mouse_pos.x - rect_min.x)) / static_cast<float>(size.x);
+				viewer_mouse_pos.y() = 1.0f - ((mouse_pos.y - rect_min.y)) / static_cast<float>(size.y);
 
 				if (is_window_focused && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
 				{
 					hit_info hit{&lambertian_material::default_material()};
-					if (world.hit(camera.compute_ray_to(viewer_mouse_pos.x(), viewer_mouse_pos.y()), 0.001,
+					if (world.hit(camera.compute_ray_to(viewer_mouse_pos.x(), viewer_mouse_pos.y()), 0.001f,
 					              constants::infinity, hit))
 					{
 						selection = hit.object;

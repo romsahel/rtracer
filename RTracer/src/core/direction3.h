@@ -4,12 +4,12 @@
 
 struct direction3 : vec3
 {
-	direction3(double x, double y, double z)
+	direction3(float x, float y, float z)
 		: vec3(x, y, z)
 	{
 	}
 
-	explicit direction3(double xyz)
+	explicit direction3(float xyz)
 		: vec3(xyz)
 	{
 	}

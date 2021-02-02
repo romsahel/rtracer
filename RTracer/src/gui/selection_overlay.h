@@ -22,7 +22,7 @@ public:
 
 	void signal_change()
 	{
-		m_render.iteration = 1.0;
+		m_render.iteration = 1.0f;
 	}
 
 	bool has_valid_render()

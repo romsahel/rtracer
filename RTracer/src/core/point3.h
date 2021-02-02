@@ -4,12 +4,12 @@
 
 struct point3 : vec3
 {
-	point3(double x, double y, double z)
+	point3(float x, float y, float z)
 		: vec3(x, y, z)
 	{
 	}
 
-	explicit point3(double xyz)
+	explicit point3(float xyz)
 		: vec3(xyz)
 	{
 	}

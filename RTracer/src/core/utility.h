@@ -11,18 +11,18 @@ using uint = unsigned int;
 
 namespace constants
 {
-	// double infinity
-	inline constexpr double infinity = std::numeric_limits<double>::infinity();
+	// float infinity
+	inline constexpr float infinity = std::numeric_limits<float>::infinity();
 
-	// double pi
-	inline constexpr double pi = 3.1415926535897932385;
-	inline constexpr double inv_pi = 1.0 / pi;
+	// float pi
+	inline constexpr float pi = 3.1415926535897932385f;
+	inline constexpr float inv_pi = 1.0f / pi;
 
-	// double smallest value
-	inline constexpr double epsilon = 0.0001;
+	// float smallest value
+	inline constexpr float epsilon = 0.0001f;
 
-	// double 1/180
-	inline constexpr double inv_180 = 1 / 180.0;
+	// float 1/180
+	inline constexpr float inv_180 = 1 / 180.0f;
 }
 
 /*
@@ -30,13 +30,13 @@ namespace constants
  */
 
 // convert given degrees to radians
-inline double degrees_to_radians(double degrees)
+inline float degrees_to_radians(float degrees)
 {
 	return degrees * constants::pi * constants::inv_180;
 }
 
-// clamp given double value from min to max
-inline double clamp(double x, double min, double max)
+// clamp given float value from min to max
+inline float clamp(float x, float min, float max)
 {
 	if (x < min) return min;
 	if (x > max) return max;
@@ -49,7 +49,7 @@ template <typename T> int sign(T val) {
 
 namespace random
 {
-	// return a random double from min to max
+	// return a random float from min to max
 	template <typename T>
 	inline T get(T min = 0, T max = 1)
 	{
@@ -86,6 +86,6 @@ namespace random
 		int index = 0;
 	};
 
-	inline static_random_generator<4096, double> static_double;
+	inline static_random_generator<4096, float> static_double;
 
 }

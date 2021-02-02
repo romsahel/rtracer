@@ -6,32 +6,32 @@
 class rectangle : public hittable
 {
 public:
-	explicit rectangle(const char* name = "", point3 position = point3(vec3::zero()), double width = 1.0, double height = 1.0)
+	explicit rectangle(const char* name = "", point3 position = point3(vec3::zero()), float width = 1.0f, float height = 1.0f)
 		: hittable(name), position(position), width(width), height(height)
 	{
 	}
 
 	void update() override
 	{
-		outward_normal = direction3(0.0);
-		outward_normal[m_forward_axis] = flip_normal * 1.0;
+		outward_normal = direction3(0.0f);
+		outward_normal[m_forward_axis] = flip_normal * 1.0f;
 		vec3 offset;
-		offset[m_right_axis] = width * 0.5;
-		offset[m_up_axis] = height * 0.5;
+		offset[m_right_axis] = width * 0.5f;
+		offset[m_up_axis] = height * 0.5f;
 		offset[m_forward_axis] = constants::epsilon;
 		m_bbox = aabb(point3(position - offset), point3(position + offset));
 	}
 
 
-	bool hit(const ray& transformed_ray, double t_min, double t_max, hit_info& info) override
+	bool hit(const ray& transformed_ray, float t_min, float t_max, hit_info& info) override
 	{
-		double t = (position[m_forward_axis] - transformed_ray.origin[m_forward_axis]) / transformed_ray.direction[
+		float t = (position[m_forward_axis] - transformed_ray.origin[m_forward_axis]) / transformed_ray.direction[
 			m_forward_axis];
 		bool is_hit = t >= t_min && t <= t_max;
 		if (is_hit)
 		{
-			double x = transformed_ray.origin[m_right_axis] + t * transformed_ray.direction[m_right_axis];
-			double y = transformed_ray.origin[m_up_axis] + t * transformed_ray.direction[m_up_axis];
+			float x = transformed_ray.origin[m_right_axis] + t * transformed_ray.direction[m_right_axis];
+			float y = transformed_ray.origin[m_up_axis] + t * transformed_ray.direction[m_up_axis];
 
 			is_hit = x >= m_bbox.minimum[m_right_axis] && x <= m_bbox.maximum[m_right_axis]
 				&& y >= m_bbox.minimum[m_up_axis] && y <= m_bbox.maximum[m_up_axis];
@@ -69,10 +69,10 @@ public:
 	}
 
 	point3 position;
-	double width;
-	double height;
+	float width;
+	float height;
 
-	double flip_normal = 1.0;
+	float flip_normal = 1.0;
 
 private:
 	aabb m_bbox;

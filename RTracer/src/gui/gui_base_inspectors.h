@@ -83,7 +83,7 @@ inline bool draw_material_inspector(metal_material* material)
 inline bool draw_material_inspector(dielectric_material* material)
 {
 	bool changed = false;
-	double ior = material->index_of_refraction();
+	float ior = material->index_of_refraction();
 	if ((changed |= gui::draw_double("Index of refraction", ior, 0.01f, 1.0f)), changed)
 		material->index_of_refraction(ior);
 	return changed;
@@ -143,7 +143,7 @@ inline bool draw_hittable_inspector(rectangle* hittable)
 	bool flip = hittable->flip_normal < 0.0;
 	if (ImGui::Checkbox("Flip normal", &flip))
 	{
-		hittable->flip_normal = flip ? -1.0 : 1.0;
+		hittable->flip_normal = flip ? -1.0f : 1.0f;
 		changed = true;
 	}
 

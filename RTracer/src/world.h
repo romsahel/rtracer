@@ -47,7 +47,7 @@ public:
 		m_list.clear();
 	}
 
-	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) const
+	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) const
 	{
 		info.distance = t_max;
 

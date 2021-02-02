@@ -29,9 +29,9 @@ public:
 			{
 				for (int k = -1; k < 2; k += 2)
 				{
-					double x = center.x() + i * extent.x();
-					double y = center.y() + j * extent.y();
-					double z = center.z() + k * extent.z();
+					float x = center.x() + i * extent.x();
+					float y = center.y() + j * extent.y();
+					float z = center.z() + k * extent.z();
 
 					vec3 position{x,y,z};
 					for (int l = 0; l < 3; l++)
@@ -67,12 +67,12 @@ public:
 		                 fmax(maximum.z(), p.z()));
 	}
 
-	bool hit(const ray& r, double t_min, double t_max) const
+	bool hit(const ray& r, float t_min, float t_max) const
 	{
 		for (int i = 0; i < 3; i++)
 		{
-			double t0 = (minimum[i] - r.origin[i]) * r.inv_direction[i];
-			double t1 = (maximum[i] - r.origin[i]) * r.inv_direction[i];
+			float t0 = (minimum[i] - r.origin[i]) * r.inv_direction[i];
+			float t1 = (maximum[i] - r.origin[i]) * r.inv_direction[i];
 			if (r.inv_direction[i] < 0.0)
 				std::swap(t0, t1);
 			t_min = t0 > t_min ? t0 : t_min;

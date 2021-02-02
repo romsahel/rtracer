@@ -26,7 +26,7 @@ public:
 
 	const char* name;
 	texture* emission = solid_color::black();
-	double emission_strength = 0.0;
+	float emission_strength = 0.0;
 };
 
 

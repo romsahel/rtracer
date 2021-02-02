@@ -13,7 +13,7 @@
 class metal_material : public material
 {
 public:
-	metal_material(const char* name, const color& a, double r)
+	metal_material(const char* name, const color& a, float r)
 		: material(name), albedo(a), roughness(r)
 	{
 	}
@@ -23,15 +23,15 @@ public:
 		const auto reflected = direction3(reflect(raycast.direction, hit.normal));
 		scattered = ray(hit.point, direction3(reflected + roughness * vec3::random_in_unit_sphere()));
 		attenuation = albedo;
-		return dot(reflected, hit.normal) > 0;
+		return dot(reflected, hit.normal) > 0.0f;
 	}
 
 	color albedo;
-	double roughness;
+	float roughness;
 
 	static metal_material& default_material()
 	{
-		static metal_material value{"default_metal", color::gray(), 0.0};
+		static metal_material value{"default_metal", color::gray(), 0.0f};
 		return value;
 	}
 };

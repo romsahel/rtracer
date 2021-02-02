@@ -13,14 +13,14 @@ public:
 	ray(const point3& origin, const direction3& direction)
 		: origin(origin),
 		  direction(normalize(direction)),
-		  inv_direction(1.0 / this->direction.x(), 1.0 / this->direction.y(), 1.0 / this->direction.z())
+		  inv_direction(1.0f / this->direction.x(), 1.0f / this->direction.y(), 1.0f / this->direction.z())
 	{
 	}
 
 	/// <summary>
 	/// returns the point positioned on the ray, at the given distance from its origin 
 	/// </summary>
-	point3 at(double t) const
+	point3 at(float t) const
 	{
 		return point3(origin + direction * t);
 	}

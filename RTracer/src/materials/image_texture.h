@@ -27,15 +27,15 @@ public:
 	{
 		if (data == nullptr) return color::magenta();
 
-		double u = clamp(uv_coordinates.x(), 0, 1);
-		double v = 1.0 - clamp(uv_coordinates.y(), 0, 1);
+		float u = clamp(uv_coordinates.x(), 0, 1);
+		float v = 1.0f - clamp(uv_coordinates.y(), 0, 1);
 
 		auto i = static_cast<int>(u * width);
 		auto j = static_cast<int>(v * height);
 		if (i >= width) i = width - 1;
 		if (j >= height) j = height - 1;
 
-		static const double color_scale = 1.0 / 255.0;
+		static const float color_scale = 1.0f / 255.0f;
 		const auto pixel_data = data + j * bytes_per_scanline + i * bytes_per_pixel;
 		return color(color_scale * pixel_data[0], color_scale * pixel_data[1], color_scale * pixel_data[2]);
 	}

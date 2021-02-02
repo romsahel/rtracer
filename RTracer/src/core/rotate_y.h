@@ -48,7 +48,7 @@ public:
 		bbox.maximum += position;
 	}
 
-	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) override
+	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override
 	{
 		auto moved_ray = ::ray(point3(ray.origin - position), ray.direction);
 		if (!object->hit(moved_ray, t_min, t_max, info))
@@ -66,14 +66,14 @@ template <int axis>
 class rotate_base : public transform_root
 {
 public:
-	rotate_base(hittable* object, double angle): transform_root(object->name.c_str(), object), angle(angle)
+	rotate_base(hittable* object, float angle): transform_root(object->name.c_str(), object), angle(angle)
 	{
 	}
 
 	void update() override
 	{
 		transform_root::update();
-		const double radians = degrees_to_radians(angle);
+		const float radians = degrees_to_radians(angle);
 		sin_theta = sin(radians);
 		cos_theta = cos(radians);
 		has_bbox = object->bounding_box(bbox);
@@ -103,7 +103,7 @@ public:
 		bbox = aabb(min, max);
 	}
 
-	vec3 rotate(const vec3& v, double sin_factor = 1.0) const
+	vec3 rotate(const vec3& v, float sin_factor = 1.0f) const
 	{
 		if constexpr (axis == 0)
 		{
@@ -133,10 +133,10 @@ public:
 		}
 	}
 
-	bool hit(const ray& r, double t_min, double t_max, hit_info& info) override
+	bool hit(const ray& r, float t_min, float t_max, hit_info& info) override
 	{
-		auto origin = point3(rotate(r.origin, -1.0));
-		auto direction = direction3(rotate(r.direction, -1.0));
+		auto origin = point3(rotate(r.origin, -1.0f));
+		auto direction = direction3(rotate(r.direction, -1.0f));
 		ray rotated_r(origin, direction);
 
 		if (!object->hit(rotated_r, t_min, t_max, info))
@@ -148,17 +148,17 @@ public:
 		return true;
 	}
 
-	double angle{0.0};
+	float angle{0.0f};
 
 private:
-	double sin_theta{0.0};
-	double cos_theta{0.0};
+	float sin_theta{0.0f};
+	float cos_theta{0.0f};
 };
 
 class rotate_x : public rotate_base<0>
 {
 public:
-	explicit rotate_x(hittable* object, double angle = 0.0)
+	explicit rotate_x(hittable* object, float angle = 0.0f)
 		: rotate_base<0>(object, angle)
 	{
 	}
@@ -167,7 +167,7 @@ public:
 class rotate_y : public rotate_base<1>
 {
 public:
-	explicit rotate_y(hittable* object, double angle = 0.0)
+	explicit rotate_y(hittable* object, float angle = 0.0f)
 		: rotate_base<1>(object, angle)
 	{
 	}
@@ -176,7 +176,7 @@ public:
 class rotate_z : public rotate_base<2>
 {
 public:
-	explicit rotate_z(hittable* object, double angle = 0.0)
+	explicit rotate_z(hittable* object, float angle = 0.0f)
 		: rotate_base<2>(object, angle)
 	{
 	}

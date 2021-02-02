@@ -1,17 +1,20 @@
 #pragma once
 
 #include <cmath>
+#include <emmintrin.h>
 
 #include "utility.h"
 
 struct vec3
 {
-	vec3(double x, double y, double z)
-		: m_xyz{x, y, z}
+	__m128 m_sse;
+
+	vec3(float x, float y, float z)
+		: m_sse(_mm_set_ps(0.0f, z, y, x))
 	{
 	}
 
-	vec3(double xyz) : vec3(xyz, xyz, xyz)
+	vec3(float xyz) : vec3(xyz, xyz, xyz)
 	{
 	}
 
@@ -19,34 +22,32 @@ struct vec3
 	{
 	}
 
-	double& x() { return m_xyz[0]; }
-	double& y() { return m_xyz[1]; }
-	double& z() { return m_xyz[2]; }
+	float& x() { return m_sse.m128_f32[0]; }
+	float& y() { return m_sse.m128_f32[1]; }
+	float& z() { return m_sse.m128_f32[2]; }
+	
+	const float& x() const { return m_sse.m128_f32[0]; }
+	const float& y() const { return m_sse.m128_f32[1]; }
+	const float& z() const { return m_sse.m128_f32[2]; }
 
-	const double& x() const { return m_xyz[0]; }
-	const double& y() const { return m_xyz[1]; }
-	const double& z() const { return m_xyz[2]; }
-
-	double operator[](int index) const
+	float operator[](int index) const
 	{
-		return m_xyz[index];
+		return m_sse.m128_f32[index];
 	}
 
-	double& operator[](int index)
+	float& operator[](int index)
 	{
-		return m_xyz[index];
+		return m_sse.m128_f32[index];
 	}
 
 	vec3 operator-() const
 	{
-		return vec3(-m_xyz[0], -m_xyz[1], -m_xyz[2]);
+		return vec3(-m_sse.m128_f32[0], -m_sse.m128_f32[1], -m_sse.m128_f32[2]);
 	}
 
 	vec3& operator+=(const vec3& v)
 	{
-		m_xyz[0] += v.m_xyz[0];
-		m_xyz[1] += v.m_xyz[1];
-		m_xyz[2] += v.m_xyz[2];
+		m_sse = _mm_add_ps(m_sse, v.m_sse);
 		return *this;
 	}
 
@@ -55,25 +56,26 @@ struct vec3
 		return this->operator+=(-v);
 	}
 
-	vec3& operator*=(double v)
+	vec3& operator*=(float v)
 	{
-		m_xyz[0] *= v;
-		m_xyz[1] *= v;
-		m_xyz[2] *= v;
+		const __m128 scalar = _mm_set1_ps(v);
+		m_sse = _mm_mul_ps(m_sse, scalar);
 		return *this;
 	}
 
-	vec3& operator/=(double v)
+	vec3& operator/=(float v)
 	{
-		return *this *= 1.0 / v;
+		const __m128 scalar = _mm_set1_ps(v);
+		m_sse = _mm_div_ps(m_sse, scalar);
+		return *this;
 	}
 
-	double length_squared() const
+	float length_squared() const
 	{
 		return x() * x() + y() * y() + z() * z();
 	}
 
-	double length() const
+	float length() const
 	{
 		return std::sqrt(length_squared());
 	}
@@ -87,30 +89,27 @@ struct vec3
 	bool is_near_zero() const
 	{
 		const static auto e = 1e-8;
-		return fabs(m_xyz[0]) < e && fabs(m_xyz[1]) < e && fabs(m_xyz[2]) < e;
+		return fabsf(m_sse.m128_f32[0]) < e && fabsf(m_sse.m128_f32[1]) < e && fabsf(m_sse.m128_f32[2]) < e;
 	}
 
 	// return a random vec3
-	static vec3 random(double min = 0.0, double max = 1.0)
+	static vec3 random(float min = 0.0, float max = 1.0f)
 	{
-		return vec3(random::get<double>(min, max), random::get<double>(min, max), random::get<double>(min, max));
+		return vec3(random::get<float>(min, max), random::get<float>(min, max), random::get<float>(min, max));
 	}
 
 	// return a random vec3 contained in a sphere placed at the origin and of a radius of 1
-	static vec3 random_in_unit_sphere(double sphere_angle = 2 * constants::pi);
+	static vec3 random_in_unit_sphere(float sphere_angle = 2 * constants::pi);
 	// return a random vec3 contained in a disk placed at the origin and of a radius of 1
 	static vec3 random_in_unit_disk();
 	// return a random vec3 contained in a hemisphere placed at the origin and of a radius of 1
 	static vec3 random_in_hemisphere(const vec3& normal);
 
 	static vec3 zero() { return vec3(0.0, 0.0, 0.0); }
-	static vec3 up() { return vec3(0.0, 1.0, 0.0); }
-	static vec3 down() { return vec3(0.0, -1.0, 0.0); }
-	static vec3 right() { return vec3(1.0, 0.0, 0.0); }
-	static vec3 left() { return vec3(-1.0, 0.0, 0.0); }
-	static vec3 forward() { return vec3(0.0, 0.0, 1.0); }
-	static vec3 backward() { return vec3(0.0, 0.0, -1.0); }	
-
-private:
-	double m_xyz[3];
+	static vec3 up() { return vec3(0.0, 1.0f, 0.0); }
+	static vec3 down() { return vec3(0.0, -1.0f, 0.0); }
+	static vec3 right() { return vec3(1.0f, 0.0, 0.0); }
+	static vec3 left() { return vec3(-1.0f, 0.0, 0.0); }
+	static vec3 forward() { return vec3(0.0, 0.0, 1.0f); }
+	static vec3 backward() { return vec3(0.0, 0.0, -1.0f); }
 };

@@ -9,24 +9,24 @@
 class camera
 {
 public:
-	camera(double aspect_ratio)
+	camera(float aspect_ratio)
 	{
 		m_aspect_ratio = aspect_ratio;
-		m_focal_length = 1.0;
+		m_focal_length = 1.0f;
 		update();
 	}
 
-	double aspect_ratio() const
+	float aspect_ratio() const
 	{
 		return m_aspect_ratio;
 	}
 
-	ray compute_ray_to(double x_pixel, double y_pixel) const
+	ray compute_ray_to(float x_pixel, float y_pixel) const
 	{
 		vec3 offset = 0.0;
 		if (aperture > constants::epsilon)
 		{
-			const vec3 disk = aperture * 2.0 * vec3::random_in_unit_disk();
+			const vec3 disk = aperture * 2.0f * vec3::random_in_unit_disk();
 			offset = m_u * disk.x() + m_v * disk.y();
 		}
 		return ray(point3(origin + offset), direction3(
@@ -35,8 +35,8 @@ public:
 
 	void update()
 	{
-		const auto h = tan(degrees_to_radians(vertical_fov) / 2);
-		m_viewport_height = 2.0 * h;
+		const auto h = tan(degrees_to_radians(vertical_fov) / 2.0f);
+		m_viewport_height = 2.0f * h;
 		m_viewport_width = m_aspect_ratio * m_viewport_height;
 
 		m_w = normalize(origin - target);
@@ -45,20 +45,20 @@ public:
 
 		m_horizontal = focus_distance * m_viewport_width * m_u;
 		m_vertical = focus_distance * m_viewport_height * m_v;
-		m_lower_left_corner = point3(origin - m_horizontal * 0.5 - m_vertical * 0.5 - focus_distance * m_w);
+		m_lower_left_corner = point3(origin - m_horizontal * 0.5f - m_vertical * 0.5f - focus_distance * m_w);
 	}
 
-	point3 origin = point3(vec3::backward() * 2.0);
+	point3 origin = point3(vec3::backward() * 2.0f);
 	point3 target = point3(vec3::zero());
-	double vertical_fov = 70.0;
-	double aperture = 0.0;
-	double focus_distance = 2.0;
+	float vertical_fov = 70.0f;
+	float aperture = 0.0f;
+	float focus_distance = 2.0f;
 
 private:
-	double m_aspect_ratio;
-	double m_viewport_height;
-	double m_viewport_width;
-	double m_focal_length;
+	float m_aspect_ratio;
+	float m_viewport_height;
+	float m_viewport_width;
+	float m_focal_length;
 	vec3 m_horizontal;
 	vec3 m_vertical;
 	point3 m_lower_left_corner;
