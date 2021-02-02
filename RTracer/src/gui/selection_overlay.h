@@ -14,10 +14,10 @@ public:
 	selection_overlay(const raytrace_render_data& base)
 	{
 		m_render = raytrace_render_data(base);
-		m_render.bounce_depth = 1;
-		m_render.bounce_depth_limit_color = color::white();
-		m_render.background_bottom_color = color::black();
-		m_render.background_top_color = color::black();
+		m_render.settings.bounce_depth = 1;
+		m_render.settings.bounce_depth_limit_color = color::white();
+		m_render.settings.background_bottom_color = color::black();
+		m_render.settings.background_top_color = color::black();
 	}
 
 	void signal_change()

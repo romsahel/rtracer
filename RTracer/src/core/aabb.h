@@ -69,14 +69,11 @@ public:
 
 	bool hit(const ray& r, double t_min, double t_max) const
 	{
-		const point3 origin = r.origin();
-		const direction3 direction = r.direction();
 		for (int i = 0; i < 3; i++)
 		{
-			double inv_d = 1.0 / direction[i];
-			double t0 = (minimum[i] - origin[i]) * inv_d;
-			double t1 = (maximum[i] - origin[i]) * inv_d;
-			if (inv_d < 0.0)
+			double t0 = (minimum[i] - r.origin[i]) * r.inv_direction[i];
+			double t1 = (maximum[i] - r.origin[i]) * r.inv_direction[i];
+			if (r.inv_direction[i] < 0.0)
 				std::swap(t0, t1);
 			t_min = t0 > t_min ? t0 : t_min;
 			t_max = t1 < t_max ? t1 : t_max;

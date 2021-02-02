@@ -12,17 +12,17 @@ using uint = unsigned int;
 namespace constants
 {
 	// double infinity
-	const double infinity = std::numeric_limits<double>::infinity();
+	inline constexpr double infinity = std::numeric_limits<double>::infinity();
 
 	// double pi
-	const double pi = 3.1415926535897932385;
-	const double inv_pi = 1.0 / pi;
+	inline constexpr double pi = 3.1415926535897932385;
+	inline constexpr double inv_pi = 1.0 / pi;
 
 	// double smallest value
-	const double epsilon = 0.0001;
+	inline constexpr double epsilon = 0.0001;
 
 	// double 1/180
-	const double inv_180 = 1 / 180.0;
+	inline constexpr double inv_180 = 1 / 180.0;
 }
 
 /*
@@ -43,6 +43,10 @@ inline double clamp(double x, double min, double max)
 	return x;
 }
 
+template <typename T> int sign(T val) {
+    return (T(0) < val) - (val < T(0));
+}
+
 namespace random
 {
 	// return a random double from min to max
@@ -61,4 +65,27 @@ namespace random
 			return distribution(generator);
 		}
 	}
+
+	template <int N, typename T>
+	struct static_random_generator
+	{
+		static_random_generator() : arr()
+		{
+			for (auto i = 0; i != N; ++i)
+				arr[i] = random::get<T>();
+		}
+
+		T get()
+		{
+			if (index >= N)
+				index = 0;
+			return arr[index++];
+		}
+
+		T arr[N];
+		int index = 0;
+	};
+
+	inline static_random_generator<4096, double> static_double;
+
 }

@@ -1,31 +1,59 @@
 ﻿#include "vec3.h"
 #include "vec3_utility.h"
 
-vec3 vec3::random_in_unit_sphere()
+template <int N>
+struct static_cbrt
 {
-	while (true)  // TODO: use a nicer algorithm than rejection
+	static_cbrt(const random::static_random_generator<N, double>& generator) : arr()
 	{
-		vec3 result = random(-1.0, 1.0);
-		if (result.length_squared() >= 1.0) continue;
-		return result;
+		for (auto i = 0; i != N; ++i)
+			arr[i] = std::cbrt(generator.arr[i]);
 	}
+
+	double get(random::static_random_generator<N, double>& generator)
+	{
+		return arr[generator.index++];
+	}
+
+	double arr[N];
+	int index = 0;
+};
+
+static auto s_cbrt = static_cbrt(random::static_double);
+
+vec3 vec3::random_in_unit_sphere(double sphere_angle)
+{
+	const auto u = random::static_double.get();
+	const auto v = random::static_double.get();
+	const auto theta = u * sphere_angle;
+	const auto phi = std::acos(2.0 * v - 1.0);
+	const auto r = s_cbrt.get(random::static_double);
+	const auto sinTheta = std::sin(theta);
+	const auto cosTheta = std::cos(theta);
+	const auto sinPhi = std::sin(phi);
+	const auto cosPhi = std::cos(phi);
+	const auto x = r * sinPhi * cosTheta;
+	const auto y = r * sinPhi * sinTheta;
+	const auto z = r * cosPhi;
+	return vec3(x, y, z);
 }
 
 vec3 vec3::random_in_unit_disk()
 {
-	while (true)  // TODO: use a nicer algorithm than rejection
-	{
-		vec3 result(random::get<double>(-1.0, 1.0), random::get<double>(-1.0, 1.0), 0.0);
-		if (result.length_squared() >= 1.0) continue;
-		return result;
-	}
+	const auto u = random::static_double.get();
+	const auto v = random::static_double.get();
+	const auto theta = u * constants::pi * 2.0;
+	const auto phi = std::acos(2.0 * v - 1.0);
+	const auto r = s_cbrt.get(random::static_double);
+	const auto sinTheta = std::sin(theta);
+	const auto cosTheta = std::cos(theta);
+	const auto sinPhi = std::sin(phi);
+	const auto x = r * sinPhi * cosTheta;
+	const auto y = r * sinPhi * sinTheta;
+	return vec3(x, y, 0.0);
 }
 
 vec3 vec3::random_in_hemisphere(const vec3& normal)
 {
-	vec3 in_unit_sphere = random_in_unit_sphere();
-	if (dot(in_unit_sphere, normal) > 0.0) // In the same hemisphere as the normal
-		return in_unit_sphere;
-	else
-		return -in_unit_sphere;
+	return random_in_unit_sphere(constants::pi * sign(dot(normal, vec3::up()) + constants::epsilon));
 }

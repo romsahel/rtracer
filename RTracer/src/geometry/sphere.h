@@ -15,22 +15,27 @@ public:
 	{
 	}
 
+
 	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) override
 	{
-		vec3 oc = ray.origin() - center;
-		double a = ray.direction().length_squared();
-		double half_b = dot(ray.direction(), oc);
-		double c = oc.length_squared() - radius * radius;
-		double squared_discriminant = half_b * half_b - a * c;
+		return hit(*this, ray, t_min, t_max, info);
+	}
+
+	static inline bool hit(sphere& sphere, const ray& ray, double t_min, double t_max, hit_info& info)
+	{
+		vec3 oc = ray.origin - sphere.center;
+		double half_b = dot(ray.direction, oc);
+		double c = oc.length_squared() - sphere.radius * sphere.radius;
+		double squared_discriminant = half_b * half_b - c;
 		bool is_hit = squared_discriminant >= 0;
 		if (is_hit)
 		{
 			double discriminant = std::sqrt(squared_discriminant);
-			double root = (-half_b - discriminant) / a;
+			double root = (-half_b - discriminant);
 			is_hit = root >= t_min && root <= t_max;
 			if (!is_hit)
 			{
-				root = (-half_b + discriminant) / a;
+				root = (-half_b + discriminant);
 				is_hit = root >= t_min && root <= t_max;
 			}
 
@@ -38,11 +43,11 @@ public:
 			{
 				info.distance = root;
 				info.point = ray.at(info.distance);
-				const direction3 outward_normal = direction3((info.point - center) / radius);
+				const direction3 outward_normal = direction3((info.point - sphere.center) / sphere.radius);
 				info.set_face_normal(ray, outward_normal);
-				info.material = material;
+				info.material = sphere.material;
 				set_uv_at(outward_normal, info.uv_coordinates);
-				info.object = this;
+				info.object = &sphere;
 			}
 		}
 

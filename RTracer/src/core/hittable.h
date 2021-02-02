@@ -38,7 +38,7 @@ struct hit_info
 	// set both front_face and normal property using the raycast and the outward normal to compute
 	inline void set_face_normal(const ray& r, const direction3& outward_normal)
 	{
-		front_face = dot(r.direction(), outward_normal) < 0;
+		front_face = dot(r.direction, outward_normal) < 0;
 		normal = front_face ? outward_normal : direction3(-outward_normal);
 	}
 };

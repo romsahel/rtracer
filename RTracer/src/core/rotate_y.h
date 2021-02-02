@@ -50,7 +50,7 @@ public:
 
 	bool hit(const ray& ray, double t_min, double t_max, hit_info& info) override
 	{
-		auto moved_ray = ::ray(point3(ray.origin() - position), ray.direction());
+		auto moved_ray = ::ray(point3(ray.origin - position), ray.direction);
 		if (!object->hit(moved_ray, t_min, t_max, info))
 		{
 			return false;
@@ -135,8 +135,8 @@ public:
 
 	bool hit(const ray& r, double t_min, double t_max, hit_info& info) override
 	{
-		auto origin = point3(rotate(r.origin(), -1.0));
-		auto direction = direction3(rotate(r.direction(), -1.0));
+		auto origin = point3(rotate(r.origin, -1.0));
+		auto direction = direction3(rotate(r.direction, -1.0));
 		ray rotated_r(origin, direction);
 
 		if (!object->hit(rotated_r, t_min, t_max, info))

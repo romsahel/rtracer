@@ -77,7 +77,7 @@ public:
 		m_bvh = new bvh_node(m_list, 0, m_list.size());
 	}
 
-	bool use_bvh{false};
+	bool use_bvh{true};
 
 private:
 	hittable* m_bvh{nullptr};

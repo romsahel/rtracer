@@ -172,7 +172,7 @@ int main()
 	const int image_width = 400;
 	const int image_height = static_cast<int>(image_width / camera.aspect_ratio());
 	raytrace_renderer raytrace_renderer{image_width, image_height};
-	raytrace_renderer.current_render.background_strength = 0.05;
+	raytrace_renderer.current_render.settings.background_strength = 0.05;
 
 	selection_overlay selection_overlay{raytrace_renderer.current_render};
 
@@ -182,7 +182,7 @@ int main()
 	bool pause_rendering = false;
 	long long last_render_time = 0;
 	long long total_render_time = 0;
-	long long average_render_time = 0;
+	long long average_render_time = 0, min_render_time = 0, max_render_time = 0;
 	int max_render_iteration = 1000;
 #ifdef _DEBUG
 	max_render_iteration = 2;
@@ -204,18 +204,23 @@ int main()
 				if (raytrace_renderer.current_render.iteration < 3.0)
 				{
 					total_render_time = 0;
+					min_render_time = 99999;
+					max_render_time = 0;
 				}
 
 				total_render_time += last_render_time;
+				min_render_time = std::min(min_render_time, last_render_time);
+				max_render_time = std::max(max_render_time, last_render_time);
+				//average_render_time = static_cast<long long>((min_render_time + max_render_time) * 0.5);
 				average_render_time = static_cast<long long>(
 					static_cast<double>(total_render_time) / (raytrace_renderer.current_render.iteration - 1.0)
 				);
 			}
 
 
-			ImGui::Text("Render: %d / %d (last: %llums ; avg: %llums)",
+			ImGui::Text("Render: %d / %d (avg: %llums)",
 			            static_cast<int>(raytrace_renderer.current_render.iteration),
-			            max_render_iteration, last_render_time,
+			            max_render_iteration,
 			            average_render_time);
 			ImGui::SameLine();
 			if (pause_rendering ? ImGui::Button("Resume rendering") : ImGui::Button("Pause rendering"))
@@ -230,11 +235,11 @@ int main()
 				scene_changed |= prev_max_render_iteration > max_render_iteration;
 			}
 
-			scene_changed |= ImGui::DragInt("Max depth", &raytrace_renderer.current_render.bounce_depth);
-			scene_changed |= gui::draw_double("Ambiant strength", raytrace_renderer.current_render.background_strength);
-			scene_changed |= gui::draw_color("Background top", raytrace_renderer.current_render.background_top_color);
+			scene_changed |= ImGui::DragInt("Max depth", &raytrace_renderer.current_render.settings.bounce_depth);
+			scene_changed |= gui::draw_double("Ambiant strength", raytrace_renderer.current_render.settings.background_strength);
+			scene_changed |= gui::draw_color("Background top", raytrace_renderer.current_render.settings.background_top_color);
 			scene_changed |= gui::draw_color("Background bottom",
-			                                 raytrace_renderer.current_render.background_bottom_color);
+			                                 raytrace_renderer.current_render.settings.background_bottom_color);
 			ImGui::Checkbox("Use BVH", &world.use_bvh);
 		}
 		ImGui::End();

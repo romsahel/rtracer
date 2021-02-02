@@ -25,13 +25,13 @@ public:
 
 	bool hit(const ray& transformed_ray, double t_min, double t_max, hit_info& info) override
 	{
-		double t = (position[m_forward_axis] - transformed_ray.origin()[m_forward_axis]) / transformed_ray.direction()[
+		double t = (position[m_forward_axis] - transformed_ray.origin[m_forward_axis]) / transformed_ray.direction[
 			m_forward_axis];
 		bool is_hit = t >= t_min && t <= t_max;
 		if (is_hit)
 		{
-			double x = transformed_ray.origin()[m_right_axis] + t * transformed_ray.direction()[m_right_axis];
-			double y = transformed_ray.origin()[m_up_axis] + t * transformed_ray.direction()[m_up_axis];
+			double x = transformed_ray.origin[m_right_axis] + t * transformed_ray.direction[m_right_axis];
+			double y = transformed_ray.origin[m_up_axis] + t * transformed_ray.direction[m_up_axis];
 
 			is_hit = x >= m_bbox.minimum[m_right_axis] && x <= m_bbox.maximum[m_right_axis]
 				&& y >= m_bbox.minimum[m_up_axis] && y <= m_bbox.maximum[m_up_axis];
