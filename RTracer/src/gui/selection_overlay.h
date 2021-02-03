@@ -12,8 +12,8 @@ class selection_overlay
 {
 public:
 	selection_overlay(const raytrace_render_data& base)
+		: m_render(base)
 	{
-		m_render = raytrace_render_data(base);
 		m_render.settings.bounce_depth = 1;
 		m_render.settings.bounce_depth_limit_color = color::white();
 		m_render.settings.background_bottom_color = color::black();
@@ -42,7 +42,7 @@ public:
 
 	// render only the given selected object
 	// with minimal bounce depth and a solid-white sky to produce a black and white mask
-	void render(void* selection, material& selection_material, const camera& camera, const raytrace_renderer& renderer)
+	void render(void* selection, material& selection_material, const camera& camera, raytrace_renderer& renderer)
 	{
 		if (has_valid_render()) return;
 
@@ -58,7 +58,7 @@ public:
 		renderer.render(camera, m_world, m_render);
 
 		m_image.update(renderer.settings.image_width, renderer.settings.image_height,
-		               m_render.colors.data());
+		               m_render.front_buffer().data());
 
 		hittable_selection->material = saved_material;
 		m_world.shallow_clear();

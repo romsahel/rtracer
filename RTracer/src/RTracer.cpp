@@ -40,7 +40,8 @@ camera make_cornell_scene(world& world, object_store<material>& materials)
 
 	float cornell_width = 30.0f;
 	float cornell_height = 30.0f;
-	auto& light = world.add<rectangle>("Light", point3(0.0f, cornell_height * 0.5f - 1 + cornell_height * 0.5f, 0.0f), 10.0f,
+	auto& light = world.add<rectangle>("Light", point3(0.0f, cornell_height * 0.5f - 1 + cornell_height * 0.5f, 0.0f),
+	                                   10.0f,
 	                                   10.0f);
 	light.right_axis(2);
 	light.material = &light_material;
@@ -136,7 +137,7 @@ camera make_sphere_scene(world& world, object_store<material>& materials)
 	wall_top.right_axis(2);
 	wall_top.update();
 
-	
+
 	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
 	light_material.emission = solid_color::white();
 	light_material.emission_strength = 1.0f;
@@ -144,7 +145,7 @@ camera make_sphere_scene(world& world, object_store<material>& materials)
 	light.right_axis(2);
 	light.material = &light_material;
 	light.update();
-	
+
 	::camera camera{16.0f / 9.0f};
 	camera.origin = point3(-0.25f, 3.0f, -0.5f);
 	camera.target = point3(-0.25f, 0.0f, 3.0f);
@@ -158,8 +159,8 @@ int main()
 
 	object_store<material> materials = material_store();
 
-	//camera camera = make_sphere_scene(world, materials); // average: 179ms (bvh) - 184ms (no bvh)
-	camera camera = make_cornell_scene(world, materials); // average: 133ms (bvh) - 105ms (no bvh)
+	camera camera = make_sphere_scene(world, materials); // average: 179ms (bvh) - 184ms (no bvh)
+	//camera camera = make_cornell_scene(world, materials); // average: 133ms (bvh) - 105ms (no bvh)
 	camera.update();
 
 	material& selection_material = materials.add<lambertian_material>("Selection material", color(1.0f, 0.0, 0.0));
@@ -173,71 +174,57 @@ int main()
 	const int image_height = static_cast<int>(image_width / camera.aspect_ratio());
 	raytrace_renderer raytrace_renderer{image_width, image_height};
 	raytrace_renderer.current_render.settings.background_strength = 0.05f;
+	raytrace_renderer.render(camera, world);
 
 	selection_overlay selection_overlay{raytrace_renderer.current_render};
 
 	void* selection = nullptr;
 	void* material_selection = nullptr;
 	gui_image render_image{false};
-	bool pause_rendering = false;
-	long long last_render_time = 0;
-	long long total_render_time = 0;
-	long long average_render_time = 0, min_render_time = 0, max_render_time = 0;
-	int max_render_iteration = 1000;
-#ifdef _DEBUG
-	max_render_iteration = 2;
-#endif
+
+	long long last_render_duration = 0;
+	long long total_render_duration = 0;
+	long long average_render_time = 0, min_render_duration = 0, max_render_duration = 0;
+	float render_prev_iteration = 0;
+
 	bool mouse_over_hierarchy = false;
 	bool is_hierarchy_focused;
 	vec3 viewer_mouse_pos{-1.0f, -1.0f, -1.0f};
 
 	while (!glfwWindowShouldClose(gui::window))
 	{
-		bool is_rendering = !pause_rendering && raytrace_renderer.current_render.iteration < max_render_iteration;
+		bool is_rendering = raytrace_renderer.thread.is_alive;
 		gui::start_frame();
 
 		bool scene_changed = false;
 		if (ImGui::Begin("Render"))
 		{
-			if (is_rendering)
-			{
-				if (raytrace_renderer.current_render.iteration < 3.0)
-				{
-					total_render_time = 0;
-					min_render_time = 99999;
-					max_render_time = 0;
-				}
-
-				total_render_time += last_render_time;
-				min_render_time = std::min(min_render_time, last_render_time);
-				max_render_time = std::max(max_render_time, last_render_time);
-				//average_render_time = static_cast<long long>((min_render_time + max_render_time) * 0.5f);
-				average_render_time = static_cast<long long>(
-					static_cast<float>(total_render_time) / (raytrace_renderer.current_render.iteration - 1.0f)
-				);
-			}
-
-
+			auto target_iteration = static_cast<int>(raytrace_renderer.current_render.target_iteration);
 			ImGui::Text("Render: %d / %d (avg: %llums)",
 			            static_cast<int>(raytrace_renderer.current_render.iteration),
-			            max_render_iteration,
+			            target_iteration,
 			            average_render_time);
 			ImGui::SameLine();
-			if (pause_rendering ? ImGui::Button("Resume rendering") : ImGui::Button("Pause rendering"))
+
+			if (ImGui::Button(is_rendering ? "Pause rendering" : "Resume rendering"))
 			{
-				pause_rendering = !pause_rendering;
+				if (is_rendering) raytrace_renderer.thread.pause();
+				else raytrace_renderer.thread.resume();
 			}
 
-			int prev_max_render_iteration = max_render_iteration;
-			if (ImGui::DragInt("Max render iteration", &max_render_iteration))
+			if (ImGui::DragInt("Max render iteration", &target_iteration))
 			{
+				raytrace_renderer.current_render.target_iteration = static_cast<float>(target_iteration);
+
 				// do not signal scene change if we increased the maximum render iteration, only if it was decreased
-				scene_changed |= prev_max_render_iteration > max_render_iteration;
+				scene_changed |= static_cast<float>(target_iteration) < raytrace_renderer.current_render.iteration;
 			}
 
 			scene_changed |= ImGui::DragInt("Max depth", &raytrace_renderer.current_render.settings.bounce_depth);
-			scene_changed |= gui::draw_double("Ambiant strength", raytrace_renderer.current_render.settings.background_strength);
-			scene_changed |= gui::draw_color("Background top", raytrace_renderer.current_render.settings.background_top_color);
+			scene_changed |= gui::draw_double("Ambiant strength",
+			                                  raytrace_renderer.current_render.settings.background_strength);
+			scene_changed |= gui::draw_color("Background top",
+			                                 raytrace_renderer.current_render.settings.background_top_color);
 			scene_changed |= gui::draw_color("Background bottom",
 			                                 raytrace_renderer.current_render.settings.background_bottom_color);
 			ImGui::Checkbox("Use BVH", &world.use_bvh);
@@ -308,9 +295,9 @@ int main()
 		if (scene_changed)
 		{
 			raytrace_renderer.signal_scene_change();
+			raytrace_renderer.render(camera, world);
 			selection_overlay.signal_change();
 			world.signal_scene_change();
-			pause_rendering = false;
 		}
 
 		bool has_selection = selection != nullptr && selection != &camera;
@@ -359,17 +346,27 @@ int main()
 
 
 		gui::end_frame();
-
-		if (is_rendering)
+		
+		if (is_rendering && render_prev_iteration != raytrace_renderer.current_render.iteration)
 		{
-			auto start = std::chrono::high_resolution_clock::now();
+			if (scene_changed)
 			{
-				raytrace_renderer.render(camera, world);
-				render_image.update(image_width, image_height, raytrace_renderer.current_render.colors.data());
+				total_render_duration = 0;
+				min_render_duration = 99999;
+				max_render_duration = 0;
 			}
-			auto stop = std::chrono::high_resolution_clock::now();
-			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-			last_render_time = duration.count();
+
+			render_image.update(image_width, image_height, raytrace_renderer.current_render.front_buffer().data());
+			last_render_duration = raytrace_renderer.current_render.last_render_duration;
+			render_prev_iteration = raytrace_renderer.current_render.iteration;
+
+			total_render_duration += last_render_duration;
+			min_render_duration = std::min(min_render_duration, last_render_duration);
+			max_render_duration = std::max(max_render_duration, last_render_duration);
+			//average_render_time = static_cast<long long>((min_render_time + max_render_time) * 0.5f);
+			average_render_time = static_cast<long long>(
+				static_cast<float>(total_render_duration) / (raytrace_renderer.current_render.iteration - 1.0f)
+			);
 		}
 
 		if (has_selection)
@@ -378,6 +375,7 @@ int main()
 		}
 	}
 
+	raytrace_renderer.clear();
 	gui::cleanup();
 
 	return 0;

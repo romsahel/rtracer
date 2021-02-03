@@ -30,6 +30,21 @@ struct color : vec3
 	static color gray() { return color(0.5f, 0.5f, 0.5f); }
 };
 
+inline vec3 to_writable_color(vec3 rgb, float inv_samples_per_pixel)
+{
+	__m128 scalar = _mm_set1_ps(inv_samples_per_pixel);
+	rgb.m_sse = _mm_mul_ps(rgb.m_sse, scalar);
+	rgb.m_sse= _mm_sqrt_ps(rgb.m_sse);
+	scalar = _mm_set1_ps(255.0f);
+	rgb.m_sse = _mm_mul_ps(rgb.m_sse, scalar);
+	return rgb;
+}
+
+__forceinline unsigned char to_writable_color(float rgb)
+{
+	return static_cast<unsigned char>(clamp(rgb, 0.0f, 255.0f));
+}
+
 inline unsigned char to_writable_color(float rgb, float inv_samples_per_pixel)
 {
 	return static_cast<unsigned char>((clamp(255.0f * sqrt(inv_samples_per_pixel * rgb), 0.0f, 255.0f)));

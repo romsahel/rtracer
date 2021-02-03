@@ -30,12 +30,12 @@ struct vec3
 	const float& y() const { return m_sse.m128_f32[1]; }
 	const float& z() const { return m_sse.m128_f32[2]; }
 
-	float operator[](int index) const
+	float operator[](size_t index) const
 	{
 		return m_sse.m128_f32[index];
 	}
 
-	float& operator[](int index)
+	float& operator[](size_t index)
 	{
 		return m_sse.m128_f32[index];
 	}

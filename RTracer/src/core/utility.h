@@ -36,11 +36,9 @@ inline float degrees_to_radians(float degrees)
 }
 
 // clamp given float value from min to max
-inline float clamp(float x, float min, float max)
+__forceinline float clamp(float x, float min, float max)
 {
-	if (x < min) return min;
-	if (x > max) return max;
-	return x;
+	return x < min ? min : x > max ? max : x;
 }
 
 template <typename T> int sign(T val) {
@@ -86,6 +84,6 @@ namespace random
 		int index = 0;
 	};
 
-	inline static_random_generator<4096, float> static_double;
+	inline static_random_generator<8192, float> static_double;
 
 }

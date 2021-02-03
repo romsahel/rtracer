@@ -60,13 +60,221 @@ struct raytrace_render_settings
 struct raytrace_render_data
 {
 	std::vector<raytrace_pixel> pixels;
-	std::vector<unsigned char> colors;
 	float iteration = 1.0f;
+	float target_iteration = 1000.0f;
+
 	raytrace_render_settings settings;
+	long long last_render_duration;
+
+	raytrace_render_data() = default;
+
+	raytrace_render_data(const raytrace_render_data& other)
+		: pixels(other.pixels),
+		  iteration(other.iteration),
+		  target_iteration(other.target_iteration),
+		  settings(other.settings),
+		  last_render_duration(other.last_render_duration),
+		  colors_front(other.colors_front),
+		  colors_back(other.colors_back)
+	{
+	}
 
 	void set_pixels_from(const raytrace_render_data& src)
 	{
 		std::memcpy(pixels.data(), src.pixels.data(), pixels.size() * sizeof(raytrace_pixel));
+	}
+
+	void swap_buffers()
+	{
+		//std::lock_guard<std::mutex> guard(m_mutex);
+		std::swap(colors_front, colors_back);
+	}
+
+	auto& front_buffer()
+	{
+		//std::lock_guard<std::mutex> guard(m_mutex);
+		return colors_front;
+	}
+
+	auto& back_buffer()
+	{
+		//std::lock_guard<std::mutex> guard(m_mutex);
+		return colors_back;
+	}
+
+
+private:
+	//std::mutex m_mutex;
+	std::vector<unsigned char> colors_front;
+	std::vector<unsigned char> colors_back;
+};
+
+struct raytrace_render_command
+{
+	raytrace_render_command(const camera& camera, world& world, raytrace_render_data& data)
+		: camera(camera),
+		  world(world),
+		  data(data)
+	{
+	}
+
+	const camera& camera;
+	world& world;
+	raytrace_render_data& data;
+};
+
+struct raytrace_render_thread
+{
+	const raytrace_settings& settings;
+	bool is_alive{false};
+	std::thread thread;
+	std::deque<std::shared_ptr<raytrace_render_command>> commands;
+
+	explicit raytrace_render_thread(const raytrace_settings& settings)
+		: settings(settings)
+	{
+	}
+
+	void request_render(const camera& camera, world& world, raytrace_render_data& data)
+	{
+		bool already_rendering = false;
+		for (auto& cmd : commands)
+		{
+			if (&cmd->data == &data)
+			{
+				already_rendering = true;
+				break;
+			}
+		}
+
+		if (!already_rendering)
+		{
+			commands.emplace_back(std::make_shared<raytrace_render_command>(camera, world, data));
+			if (!is_alive)
+			{
+				thread = std::thread(&raytrace_render_thread::loop, this);
+			}
+		}
+	}
+
+	void loop()
+	{
+		is_alive = true;
+		while (!commands.empty() && is_alive)
+		{
+			std::shared_ptr<raytrace_render_command> cmd = commands.front();
+			commands.pop_front();
+			if (!render(cmd->camera, cmd->world, cmd->data, settings))
+			{
+				commands.push_back(cmd);
+			}
+		}
+		is_alive = false;
+	}
+
+	void pause()
+	{
+		is_alive = false;
+	}
+
+	void resume()
+	{
+		if (!is_alive)
+		{
+			thread.join();
+			thread = std::thread(&raytrace_render_thread::loop, this);
+		}
+	}
+
+	void clear()
+	{
+		is_alive = false;
+		commands.clear();
+		thread.join();
+	}
+
+	/// <summary>
+	/// render to a custom render_data using a custom ray_color_provider.
+	/// Default one is ray_color_with_gradient_sky
+	/// </summary>
+	static bool render(const camera& camera, world& world, raytrace_render_data& data,
+	                   const raytrace_settings& raytrace_settings)
+	{
+		auto start = std::chrono::high_resolution_clock::now();
+
+		
+		// render settings
+		const float inv_samples_per_pixel = 1.0f / data.iteration;
+		const raytrace_render_settings render_settings = data.settings;
+		std::vector<unsigned char>& pixel_colors = data.back_buffer();
+		float inv_width = 1.0f / (static_cast<float>(raytrace_settings.image_width) - 1);
+		float inv_height = 1.0f / (static_cast<float>(raytrace_settings.image_height) - 1);
+		
+		std::for_each(
+			std::execution::par,
+			data.pixels.begin(),
+			data.pixels.end(),
+			[&pixel_colors, &world, &camera, render_settings,
+				inv_samples_per_pixel, inv_width, inv_height](raytrace_pixel& pixel)
+			{
+				const float u = (pixel.x + random::static_double.get()) * inv_width;
+				const float v = (pixel.y + random::static_double.get()) * inv_height;
+				pixel.color += ray_color_with_gradient_sky_attenuated(camera.compute_ray_to(u, v), world,
+				                                                      render_settings, color::white(), color::black());
+
+				// convert pixel.color into image-readable ascii pixel_colors
+				vec3 c = to_writable_color(pixel.color, inv_samples_per_pixel);
+				for (size_t i = 0; i < 3; i++)
+					pixel_colors[pixel.index + i] = static_cast<unsigned char>(clamp(c[i], 0.0f, 255.0f));
+			});
+		
+		data.iteration++;
+		data.swap_buffers();
+
+		const auto stop = std::chrono::high_resolution_clock::now();
+		const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+		data.last_render_duration = duration.count();
+		
+		return data.iteration >= data.target_iteration;
+	}
+
+	/// <summary>
+	/// return the color for the given raycast, using a blue-gradient sky (when the raycast returns no hit)
+	/// </summary>
+	static color ray_color_with_gradient_sky_attenuated(ray raycast, world& world,
+	                                                    const raytrace_render_settings& settings,
+	                                                    color acc_attenuation, color acc_emitted)
+	{
+		int depth = settings.bounce_depth;
+		while (true)
+		{
+			hit_info hit{&lambertian_material::default_material()};
+			if (!world.hit(raycast, 0.001f, constants::infinity, hit))
+			{
+				const float t = 0.5f * (raycast.direction.y() + 1.0f);
+				return color(acc_emitted + mul(acc_attenuation,
+				                               color(((1.0f - t) * settings.background_bottom_color + t * settings.
+					                               background_top_color) * settings.background_strength)));
+			}
+
+			color attenuation;
+			ray scattered;
+			const color emitted = hit.material->emitted(hit.uv_coordinates, hit.point);
+			if (hit.material->scatter(raycast, hit, attenuation, scattered))
+			{
+				raycast = scattered;
+				acc_attenuation = color(mul(acc_attenuation, attenuation));
+				acc_emitted = color(acc_emitted + mul(acc_attenuation, emitted));
+				depth = depth - 1;
+				if (depth < 1)
+				{
+					return color(acc_emitted + mul(acc_attenuation, settings.bounce_depth_limit_color));
+				}
+				continue;
+			}
+
+			return color(acc_emitted + mul(acc_attenuation, emitted));
+		}
 	}
 };
 
@@ -74,7 +282,7 @@ class raytrace_renderer
 {
 public:
 	raytrace_renderer(int image_width, int image_height)
-		: settings{image_width, image_height}
+		: settings{image_width, image_height}, thread(settings)
 	{
 		const size_t channels_num = 3;
 		const size_t pixel_count = static_cast<size_t>(image_width) * image_height;
@@ -82,7 +290,8 @@ public:
 		current_render.pixels.reserve(pixel_count);
 		empty_render.pixels.reserve(pixel_count);
 
-		current_render.colors.reserve(pixel_count * channels_num);
+		current_render.back_buffer().reserve(pixel_count * channels_num);
+		current_render.front_buffer().reserve(pixel_count * channels_num);
 
 		int index = 0;
 		for (float y = static_cast<float>(image_height - 1); y >= 0; --y)
@@ -93,7 +302,8 @@ public:
 				empty_render.pixels.emplace_back(index, x, y);
 				for (int i = 0; i < channels_num; ++i)
 				{
-					current_render.colors.emplace_back();
+					current_render.back_buffer().emplace_back();
+					current_render.front_buffer().emplace_back();
 					index++;
 				}
 			}
@@ -117,80 +327,18 @@ public:
 		render(camera, world, current_render);
 	}
 
-	using ray_color_provider = color(*)(const ray&, const ::world&, int, color);
-
-	/// <summary>
-	/// render to a custom render_data using a custom ray_color_provider.
-	/// Default one is ray_color_with_gradient_sky
-	/// </summary>
-	void render(const camera& camera, world& world, raytrace_render_data& data) const
+	void render(const camera& camera, world& world, raytrace_render_data& data)
 	{
-		// render settings
-		const float inv_samples_per_pixel = 1.0f / data.iteration;
-		data.iteration++;
+		thread.request_render(camera, world, data);
+	}
 
-		const raytrace_settings& raytrace_settings = this->settings;
-		const raytrace_render_settings render_settings = data.settings;
-		std::vector<unsigned char>& pixel_colors = data.colors;
-		float inv_width = 1.0f / (static_cast<float>(raytrace_settings.image_width) - 1);
-		float inv_height = 1.0f / (static_cast<float>(raytrace_settings.image_height) - 1);
-		std::for_each(
-			std::execution::par,
-			data.pixels.begin(),
-			data.pixels.end(),
-			[&pixel_colors, &world, &camera, render_settings,
-				inv_samples_per_pixel, inv_width, inv_height](raytrace_pixel& pixel)
-			{
-				const float u = (pixel.x + random::static_double.get()) * inv_width;
-				const float v = (pixel.y + random::static_double.get()) * inv_height;
-				pixel.color += ray_color_with_gradient_sky_attenuated(camera.compute_ray_to(u, v), world, render_settings, color::white(), color::black());
-				
-				// convert pixel.color into image-readable ascii pixel_colors
-				pixel_colors[pixel.index] = to_writable_color(pixel.color.x(), inv_samples_per_pixel);
-				pixel_colors[pixel.index + 1] = to_writable_color(pixel.color.y(), inv_samples_per_pixel);
-				pixel_colors[pixel.index + 2] = to_writable_color(pixel.color.z(), inv_samples_per_pixel);
-			});
+	void clear()
+	{
+		thread.clear();
 	}
 
 	raytrace_settings settings;
+	raytrace_render_thread thread;
 	raytrace_render_data current_render;
 	raytrace_render_data empty_render;
-
-private:
-	/// <summary>
-	/// return the color for the given raycast, using a blue-gradient sky (when the raycast returns no hit)
-	/// </summary>
-	static color ray_color_with_gradient_sky_attenuated(ray raycast, world& world,
-	                                         const raytrace_render_settings& settings,
-											 color acc_attenuation, color acc_emitted)
-	{
-		int depth = settings.bounce_depth;
-		while (true)
-		{
-			hit_info hit{&lambertian_material::default_material()};
-			if (!world.hit(raycast, 0.001f, constants::infinity, hit))
-			{
-				const float t = 0.5f * (raycast.direction.y() + 1.0f);
-				return color(acc_emitted + mul(acc_attenuation, color(((1.0f - t) * settings.background_bottom_color + t * settings.background_top_color) * settings.background_strength)));
-			}
-			
-			color attenuation;
-			ray scattered;
-			const color emitted = hit.material->emitted(hit.uv_coordinates, hit.point);
-			if (hit.material->scatter(raycast, hit, attenuation, scattered))
-			{
-				raycast = scattered;
-				acc_attenuation = color(mul(acc_attenuation, attenuation));
-				acc_emitted = color(acc_emitted + mul(acc_attenuation, emitted));
-				depth = depth - 1;
-				if (depth < 1)
-				{
-					return color(acc_emitted + mul(acc_attenuation, settings.bounce_depth_limit_color));
-				}
-				continue;
-			}
-
-			return color(acc_emitted + mul(acc_attenuation, emitted));
-		}
-	}
 };
