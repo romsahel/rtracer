@@ -5,7 +5,7 @@
 struct direction3 : vec3
 {
 	direction3(float x, float y, float z)
-		: vec3(x, y, z)
+		: vec3(x, y, z, 0.0f)
 	{
 	}
 
@@ -19,5 +19,6 @@ struct direction3 : vec3
 	explicit direction3(const vec3& v)
 		: vec3(v)
 	{
+		data.array[3] = 0.0f;
 	}
 };

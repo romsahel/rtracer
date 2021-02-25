@@ -21,6 +21,7 @@
 
 #include "raytrace_renderer.h"
 #include "world.h"
+#include "core/matrix4x4.h"
 #include "core/rotate_y.h"
 #include "geometry/box.h"
 
@@ -159,8 +160,28 @@ int main()
 
 	object_store<material> materials = material_store();
 
-	camera camera = make_sphere_scene(world, materials); // average: 179ms (bvh) - 184ms (no bvh)
-	//camera camera = make_cornell_scene(world, materials); // average: 133ms (bvh) - 105ms (no bvh)
+	//matrix4x4 m1(4, 5, 6, 2,
+	//	1, 2, 4, 8,
+	//	7, 1, 5, 6,
+	//	4, 1, 2, 3);
+	//matrix4x4 m2(4, 1, 2, 3,
+	//	5, 7, 3, 7,
+	//	1, 4, 5, 1,
+	//	2, 4, 7, 9);
+
+	//matrix4x4 id;
+	//id.translate(vec3(10.0f, 0.0f, 0.0f));
+	////id.translate(vec3(0.0f, 4.0f, 0.0f));
+	//
+	//auto position = vec3(1.0f, 42.0f, 3.0f);
+	//auto p = matrix4x4::multiply(m1, direction3(position)); // (67.000, 92.000, 189.000)
+	//auto g = matrix4x4::multiply(id, point3(position)); // 11.0000000, 42.0000000, 3.00000000, 1.00000000
+	//
+	//auto rotation = matrix4x4::from_euler_degrees(vec3(12.0f, 32.0f, 15.0f));
+
+	//
+	camera camera = make_sphere_scene(world, materials); // average: 179 - 184 (no bvh) || post-opti: 68 - 123 (no bvh)
+	//camera camera = make_cornell_scene(world, materials); // average: 133 - 105 (no bvh) || post-opti: 58 - 57 (no bvh)
 	camera.update();
 
 	material& selection_material = materials.add<lambertian_material>("Selection material", color(1.0f, 0.0, 0.0));

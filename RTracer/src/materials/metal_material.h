@@ -21,7 +21,7 @@ public:
 	bool scatter(const ray& raycast, const hit_info& hit, color& attenuation, ray& scattered) const override
 	{
 		const auto reflected = direction3(reflect(raycast.direction, hit.normal));
-		scattered = ray(hit.point, direction3(reflected + roughness * vec3::random_in_unit_sphere()));
+		scattered = ray(hit.point, direction3(reflected + roughness * vector3::random_in_unit_sphere()));
 		attenuation = albedo;
 		return dot(reflected, hit.normal) > 0.0f;
 	}

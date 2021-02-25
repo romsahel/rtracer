@@ -2,11 +2,12 @@
 
 #include "core/aabb.h"
 #include "core/hittable.h"
+#include "core/matrix4x4.h"
 
 class rectangle : public hittable
 {
 public:
-	explicit rectangle(const char* name = "", point3 position = point3(vec3::zero()), float width = 1.0f, float height = 1.0f)
+	explicit rectangle(const char* name = "", point3 position = point3(vector3::zero()), float width = 1.0f, float height = 1.0f)
 		: hittable(name), position(position), width(width), height(height)
 	{
 	}
@@ -74,10 +75,13 @@ public:
 
 	float flip_normal = 1.0;
 
+	matrix4x4 transform;
+
 private:
 	aabb m_bbox;
 	int m_right_axis = 0;
 	int m_up_axis = 1;
 	int m_forward_axis = 2;
 	direction3 outward_normal;
+
 };

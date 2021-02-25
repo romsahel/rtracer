@@ -23,10 +23,10 @@ public:
 
 	ray compute_ray_to(float x_pixel, float y_pixel) const
 	{
-		vec3 offset = 0.0;
+		vec3 offset{0.0f};
 		if (aperture > constants::epsilon)
 		{
-			const vec3 disk = aperture * 2.0f * vec3::random_in_unit_disk();
+			const vec3 disk = aperture * 2.0f * vector3::random_in_unit_disk();
 			offset = m_u * disk.x() + m_v * disk.y();
 		}
 		return ray(point3(origin + offset), direction3(
@@ -40,7 +40,7 @@ public:
 		m_viewport_width = m_aspect_ratio * m_viewport_height;
 
 		m_w = normalize(origin - target);
-		m_u = normalize(cross(vec3::up(), m_w));
+		m_u = normalize(cross(vector3::up(), m_w));
 		m_v = cross(m_w, m_u);
 
 		m_horizontal = focus_distance * m_viewport_width * m_u;
@@ -48,8 +48,8 @@ public:
 		m_lower_left_corner = point3(origin - m_horizontal * 0.5f - m_vertical * 0.5f - focus_distance * m_w);
 	}
 
-	point3 origin = point3(vec3::backward() * 2.0f);
-	point3 target = point3(vec3::zero());
+	point3 origin = point3(vector3::backward() * 2.0f);
+	point3 target = point3(vector3::zero());
 	float vertical_fov = 70.0f;
 	float aperture = 0.0f;
 	float focus_distance = 2.0f;

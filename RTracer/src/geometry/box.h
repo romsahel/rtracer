@@ -2,6 +2,7 @@
 
 #include "rectangle.h"
 #include "core/hittable.h"
+#include "core/matrix4x4.h"
 
 class box : public hittable
 {
