@@ -10,6 +10,7 @@
 #include "materials/image_texture.h"
 #include "materials/lambertian_material.h"
 #include "materials/metal_material.h"
+#include <glm/gtx/matrix_decompose.hpp>
 
 inline bool draw_camera_inspector(camera& camera)
 {
@@ -112,8 +113,8 @@ inline bool draw_material_inspector(material* material)
 inline material** get_selection_material(void* selection)
 {
 	auto hittable = static_cast<::hittable*>(selection);
-	if (auto* cast = dynamic_cast<transform_root*>(hittable); cast != nullptr)
-		return &cast->object->material;
+	//if (auto* cast = dynamic_cast<transform_root*>(hittable); cast != nullptr)
+	//	return &cast->object->material;
 	return &hittable->material;
 }
 
@@ -122,7 +123,6 @@ bool draw_hittable_inspector(hittable* hittable, bool with_header);
 inline bool draw_hittable_inspector(sphere* hittable)
 {
 	bool changed = false;
-	changed |= gui::draw_vec3("Center", hittable->center);
 	changed |= gui::draw_double("Radius", hittable->radius, 0.1f, 0.01f);
 	return changed;
 }
@@ -130,17 +130,11 @@ inline bool draw_hittable_inspector(sphere* hittable)
 inline bool draw_hittable_inspector(rectangle* hittable)
 {
 	bool changed = false;
-	changed |= gui::draw_vec3("Offset", hittable->position);
 	changed |= gui::draw_double("Width", hittable->width);
 	changed |= gui::draw_double("Height", hittable->height);
 
-	if (ImGui::Button("Change orientation"))
-	{
-		hittable->right_axis((hittable->right_axis() + 1) % 3);
-		changed = true;
-	}
 	ImGui::SameLine();
-	bool flip = hittable->flip_normal < 0.0;
+	bool flip = hittable->flip_normal < 0.0f;
 	if (ImGui::Checkbox("Flip normal", &flip))
 	{
 		hittable->flip_normal = flip ? -1.0f : 1.0f;
@@ -158,51 +152,75 @@ inline bool draw_hittable_inspector(box* hittable)
 	return changed;
 }
 
-template <int axis>
-inline bool draw_hittable_inspector(rotate_base<axis>* hittable, const char* label)
-{
-	bool changed = false;
-	changed |= gui::draw_double(label, hittable->angle);
-	return changed;
-}
-
-inline bool draw_hittable_inspector(transform_root* hittable)
-{
-	bool changed = false;
-	if (auto* translation = dynamic_cast<translator*>(hittable); translation != nullptr)
-	{
-		changed |= gui::draw_vec3("Position", translation->position);
-	}
-	else
-	{
-		if (auto* cast = dynamic_cast<rotate_x*>(hittable); cast != nullptr)
-			changed |= draw_hittable_inspector(cast, "x-rotation");
-		if (auto* cast = dynamic_cast<rotate_y*>(hittable); cast != nullptr)
-			changed |= draw_hittable_inspector(cast, "y-rotation");
-		if (auto* cast = dynamic_cast<rotate_z*>(hittable); cast != nullptr)
-			changed |= draw_hittable_inspector(cast, "z-rotation");
-	}
-
-	changed |= draw_hittable_inspector(hittable->object, false);
-
-	return changed;
-}
+//template <int axis>
+//inline bool draw_hittable_inspector(rotate_base<axis>* hittable, const char* label)
+//{
+//	bool changed = false;
+//	changed |= gui::draw_double(label, hittable->angle);
+//	return changed;
+//}
+//
+//inline bool draw_hittable_inspector(transform_root* hittable)
+//{
+//	bool changed = false;
+//	if (auto* translation = dynamic_cast<translator*>(hittable); translation != nullptr)
+//	{
+//		changed |= gui::draw_vec3("Position", translation->position);
+//	}
+//	else
+//	{
+//		if (auto* cast = dynamic_cast<rotate_x*>(hittable); cast != nullptr)
+//			changed |= draw_hittable_inspector(cast, "x-rotation");
+//		if (auto* cast = dynamic_cast<rotate_y*>(hittable); cast != nullptr)
+//			changed |= draw_hittable_inspector(cast, "y-rotation");
+//		if (auto* cast = dynamic_cast<rotate_z*>(hittable); cast != nullptr)
+//			changed |= draw_hittable_inspector(cast, "z-rotation");
+//	}
+//
+//	changed |= draw_hittable_inspector(hittable->object, false);
+//
+//	return changed;
+//}
 
 inline bool draw_hittable_inspector(hittable* hittable, bool with_header)
 {
+	bool changed = false;
 	if (!with_header || ImGui::CollapsingHeader(hittable->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
+		static ::hittable* previous_selection = nullptr;
+		static glm::vec3 euler{0.0f};
+		static vec3 translation{0.0f};
+
+		if (previous_selection != hittable)
+		{
+			static vec3 scale, skew;
+			static vec4 perspective;
+			static glm::quat orientation;
+			decompose(hittable->transform, scale, orientation, translation, skew, perspective);
+			euler = glm::degrees(glm::eulerAngles(glm::conjugate(orientation)));
+
+			previous_selection = hittable;
+		}
+		
+		changed |= gui::draw_vec3("Position", translation);
+		changed |= gui::draw_vec3("Rotation", euler);
+		if (changed)
+		{
+			auto q = glm::quat(radians(euler));
+			hittable->transform = translate(translation) * mat4_cast(q);
+			hittable->inv_transform = inverse(hittable->transform);
+		}
 		if (auto* cast = dynamic_cast<sphere*>(hittable); cast != nullptr)
-			return draw_hittable_inspector(cast);
+			changed |= draw_hittable_inspector(cast);
 		if (auto* cast = dynamic_cast<rectangle*>(hittable); cast != nullptr)
-			return draw_hittable_inspector(cast);
+			changed |= draw_hittable_inspector(cast);
 		if (auto* cast = dynamic_cast<box*>(hittable); cast != nullptr)
-			return draw_hittable_inspector(cast);
-		if (auto* cast = dynamic_cast<transform_root*>(hittable); cast != nullptr)
-			return draw_hittable_inspector(cast);
+			changed |= draw_hittable_inspector(cast);
+		//if (auto* cast = dynamic_cast<transform_root*>(hittable); cast != nullptr)
+		//	changed |= draw_hittable_inspector(cast);
 	}
 
-	return false;
+	return changed;
 }
 
 inline bool draw_inspector(camera& camera, void** selection)

@@ -152,6 +152,8 @@ struct raytrace_render_thread
 			commands.emplace_back(std::make_shared<raytrace_render_command>(camera, world, data));
 			if (!is_alive)
 			{
+				if (thread.joinable())
+					thread.join();
 				thread = std::thread(&raytrace_render_thread::loop, this);
 			}
 		}
@@ -202,14 +204,14 @@ struct raytrace_render_thread
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 
-		
+
 		// render settings
 		const float inv_samples_per_pixel = 1.0f / data.iteration;
 		const raytrace_render_settings render_settings = data.settings;
 		std::vector<unsigned char>& pixel_colors = data.back_buffer();
 		float inv_width = 1.0f / (static_cast<float>(raytrace_settings.image_width) - 1);
 		float inv_height = 1.0f / (static_cast<float>(raytrace_settings.image_height) - 1);
-		
+
 		std::for_each(
 			std::execution::par,
 			data.pixels.begin(),
@@ -219,22 +221,23 @@ struct raytrace_render_thread
 			{
 				const float u = (pixel.x + random::static_double.get()) * inv_width;
 				const float v = (pixel.y + random::static_double.get()) * inv_height;
-				pixel.color += ray_color_with_gradient_sky_attenuated(camera.compute_ray_to(u, v), world,
-				                                                      render_settings, color::white(), color::black());
+				pixel.color = color(pixel.color
+					+ ray_color_with_gradient_sky_attenuated(camera.compute_ray_to(u, v), world,
+					                                         render_settings, color::white(), color::black()));
 
 				// convert pixel.color into image-readable ascii pixel_colors
 				vec3 c = to_writable_color(pixel.color, inv_samples_per_pixel);
-				for (size_t i = 0; i < 3; i++)
+				for (int i = 0; i < 3; i++)
 					pixel_colors[pixel.index + i] = static_cast<unsigned char>(clamp(c[i], 0.0f, 255.0f));
 			});
-		
+
 		data.iteration++;
 		data.swap_buffers();
 
 		const auto stop = std::chrono::high_resolution_clock::now();
 		const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
 		data.last_render_duration = duration.count();
-		
+
 		return data.iteration >= data.target_iteration;
 	}
 
@@ -251,7 +254,7 @@ struct raytrace_render_thread
 			hit_info hit{&lambertian_material::default_material()};
 			if (!world.hit(raycast, 0.001f, constants::infinity, hit))
 			{
-				const float t = 0.5f * (raycast.direction.y() + 1.0f);
+				const float t = 0.5f * (raycast.direction.y + 1.0f);
 				return color(acc_emitted + mul(acc_attenuation,
 				                               color(((1.0f - t) * settings.background_bottom_color + t * settings.
 					                               background_top_color) * settings.background_strength)));

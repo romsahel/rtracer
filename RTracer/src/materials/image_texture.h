@@ -23,12 +23,12 @@ public:
 	}
 
 
-	color value_at(const vec3& uv_coordinates, const point3&) const override
+	color value_at(const vec2& uv_coordinates, const point3&) const override
 	{
 		if (data == nullptr) return color::magenta();
 
-		float u = clamp(uv_coordinates.x(), 0, 1);
-		float v = 1.0f - clamp(uv_coordinates.y(), 0, 1);
+		float u = clamp(uv_coordinates.x, 0, 1);
+		float v = 1.0f - clamp(uv_coordinates.y, 0, 1);
 
 		auto i = static_cast<int>(u * width);
 		auto j = static_cast<int>(v * height);

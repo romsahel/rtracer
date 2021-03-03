@@ -60,7 +60,7 @@ public:
 			bool has_hit = false;
 			for (const auto& hittable : m_list)
 			{
-				has_hit |= (hittable->hit(ray, t_min, info.distance, info));
+				has_hit |= (hittable->base_hit(ray, t_min, info.distance, info));
 			}
 
 			return has_hit;

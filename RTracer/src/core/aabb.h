@@ -19,21 +19,42 @@ public:
 	{
 	}
 
-	aabb(const point3& center, const vec3& extent)
-		: minimum(constants::infinity)
-		, maximum(-constants::infinity)
+	static aabb surrounding(aabb box0, aabb box1)
 	{
+		point3 small(fmin(box0.minimum.x, box1.minimum.x),
+		             fmin(box0.minimum.y, box1.minimum.y),
+		             fmin(box0.minimum.z, box1.minimum.z));
+
+		point3 big(fmax(box0.maximum.x, box1.maximum.x),
+		           fmax(box0.maximum.y, box1.maximum.y),
+		           fmax(box0.maximum.z, box1.maximum.z));
+
+		return aabb(small, big);
+	}
+
+	void encapsulate(const point3& p)
+	{
+		minimum = point3(fmin(minimum.x, p.x),
+		                 fmin(minimum.y, p.y),
+		                 fmin(minimum.z, p.z));
+		maximum = point3(fmax(maximum.x, p.x),
+		                 fmax(maximum.y, p.y),
+		                 fmax(maximum.z, p.z));
+	}
+
+	void transform(const glm::mat4& m)
+	{
+		const auto center = (minimum + maximum) * 0.5f;
+		const auto extent = this->extent();
+		minimum = glm::vec3(constants::infinity);
+		maximum = glm::vec3(-constants::infinity);
 		for (int i = -1; i < 2; i += 2)
 		{
 			for (int j = -1; j < 2; j += 2)
 			{
 				for (int k = -1; k < 2; k += 2)
 				{
-					float x = center.x() + i * extent.x();
-					float y = center.y() + j * extent.y();
-					float z = center.z() + k * extent.z();
-
-					vec3 position{x,y,z};
+					vec3 position = m * vec4{center.x + i * extent.x,center.y + j * extent.y,center.z + k * extent.z, 1.0f};
 					for (int l = 0; l < 3; l++)
 					{
 						minimum[l] = fmin(minimum[l], position[l]);
@@ -42,29 +63,6 @@ public:
 				}
 			}
 		}
-	}
-
-	static aabb surrounding(aabb box0, aabb box1)
-	{
-		point3 small(fmin(box0.minimum.x(), box1.minimum.x()),
-		             fmin(box0.minimum.y(), box1.minimum.y()),
-		             fmin(box0.minimum.z(), box1.minimum.z()));
-
-		point3 big(fmax(box0.maximum.x(), box1.maximum.x()),
-		           fmax(box0.maximum.y(), box1.maximum.y()),
-		           fmax(box0.maximum.z(), box1.maximum.z()));
-
-		return aabb(small, big);
-	}
-
-	void encapsulate(const point3& p)
-	{
-		minimum = point3(fmin(minimum.x(), p.x()),
-		                 fmin(minimum.y(), p.y()),
-		                 fmin(minimum.z(), p.z()));
-		maximum = point3(fmax(maximum.x(), p.x()),
-		                 fmax(maximum.y(), p.y()),
-		                 fmax(maximum.z(), p.z()));
 	}
 
 	bool hit(const ray& r, float t_min, float t_max) const
@@ -90,7 +88,7 @@ public:
 
 	vec3 extent() const
 	{
-		return size() * 0.5;
+		return size() * 0.5f;
 	}
 
 	point3 minimum;

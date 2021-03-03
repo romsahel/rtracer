@@ -38,9 +38,9 @@ namespace gui
 	inline float* vec3_to_temporary_float3(vec3 value)
 	{
 		static float xyz[3];
-		xyz[0] = static_cast<float>(value.x());
-		xyz[1] = static_cast<float>(value.y());
-		xyz[2] = static_cast<float>(value.z());
+		xyz[0] = static_cast<float>(value.x);
+		xyz[1] = static_cast<float>(value.y);
+		xyz[2] = static_cast<float>(value.z);
 		return xyz;
 	}
 
@@ -51,18 +51,18 @@ namespace gui
 
 	void display_vec3(const char* label, const vec3& value)
 	{
-		ImGui::Text("%s: (%f, %f, %f)", label, value.x(), value.y(), value.z());
+		ImGui::Text("%s: (%f, %f, %f)", label, value.x, value.y, value.z);
 	}
 
 	bool draw_vec3(const char* label, vec3& value, float speed = 0.1f)
 	{
 		ImGui::PushID(&value);
-		float* tmp = gui::vec3_to_temporary_float3(value);
-		const bool changed = ImGui::DragFloat3(label, tmp, speed);
+		//float* tmp = gui::vec3_to_temporary_float3(value);
+		const bool changed = ImGui::DragFloat3(label, glm::value_ptr(value), speed);
 		ImGui::PopID();
 
-		if (changed)
-			value = point3(gui::float3_to_vec3(tmp));
+		//if (changed)
+		//	value = point3(gui::float3_to_vec3(tmp));
 		return changed;
 	}
 

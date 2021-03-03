@@ -84,8 +84,8 @@ public:
 	{
 		if (box.hit(ray, t_min, t_max))
 		{
-			const bool hit_left = left->hit(ray, t_min, t_max, info);
-			const bool hit_right = right->hit(ray, t_min, info.distance, info);
+			const bool hit_left = left->base_hit(ray, t_min, t_max, info);
+			const bool hit_right = right->base_hit(ray, t_min, info.distance, info);
 			return hit_left || hit_right;
 		}
 		return false;

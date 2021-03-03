@@ -32,12 +32,7 @@ struct color : vec3
 
 inline vec3 to_writable_color(vec3 rgb, float inv_samples_per_pixel)
 {
-	__m128 scalar = _mm_set1_ps(inv_samples_per_pixel);
-	rgb.data.sse = _mm_mul_ps(rgb.data.sse, scalar);
-	rgb.data.sse = _mm_sqrt_ps(rgb.data.sse);
-	scalar = _mm_set1_ps(255.0f);
-	rgb.data.sse = _mm_mul_ps(rgb.data.sse, scalar);
-	return rgb;
+	return sqrt((inv_samples_per_pixel * rgb)) * 255.0f;
 }
 
 __forceinline unsigned char to_writable_color(float rgb)

@@ -19,7 +19,7 @@ public:
 
 	virtual bool scatter(const ray& raycast, const hit_info& rec, color& attenuation, ray& scattered) const = 0;
 
-	virtual color emitted(const vec3& coordinates, const point3& point)
+	virtual color emitted(const vec2& coordinates, const point3& point)
 	{
 		return color(emission_strength * emission->value_at(coordinates, point));
 	}

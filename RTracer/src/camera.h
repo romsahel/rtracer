@@ -27,7 +27,7 @@ public:
 		if (aperture > constants::epsilon)
 		{
 			const vec3 disk = aperture * 2.0f * vector3::random_in_unit_disk();
-			offset = m_u * disk.x() + m_v * disk.y();
+			offset = m_u * disk.x + m_v * disk.y;
 		}
 		return ray(point3(origin + offset), direction3(
 			           m_lower_left_corner + x_pixel * m_horizontal + y_pixel * m_vertical - origin - offset));

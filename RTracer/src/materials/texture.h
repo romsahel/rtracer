@@ -6,7 +6,7 @@
 class texture
 {
 public:
-	virtual color value_at(const vec3& uv_coordinates, const point3& p) const = 0;
+	virtual color value_at(const vec2& uv_coordinates, const point3& p) const = 0;
 
 	virtual ~texture() = default;
 };
@@ -27,7 +27,7 @@ public:
 	{
 	}
 
-	color value_at(const vec3&, const point3&) const override
+	color value_at(const vec2&, const point3&) const override
 	{
 		return color_value;
 	}
@@ -60,9 +60,9 @@ public:
 	{
 	}
 
-	color value_at(const vec3& uv_coordinates, const point3& p) const override
+	color value_at(const vec2& uv_coordinates, const point3& p) const override
 	{
-		const auto sines = sin(10 * p.x()) * sin(10 * p.y()) * sin(10 * p.z());
+		const auto sines = sin(10 * p.x) * sin(10 * p.y) * sin(10 * p.z);
 		if (sines < 0)
 			return odd->value_at(uv_coordinates, p);
 		else
