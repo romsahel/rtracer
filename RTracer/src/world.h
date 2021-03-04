@@ -53,7 +53,7 @@ public:
 
 		if (use_bvh)
 		{
-			return m_bvh->hit(ray, t_min, t_max, info);
+			return m_bvh->base_hit(ray, t_min, t_max, info);
 		}
 		else
 		{

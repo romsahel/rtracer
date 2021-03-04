@@ -9,8 +9,6 @@
 class hittable;
 class aabb;
 
-inline bool USE_TRANSFORM = true;
-
 /// <summary>
 /// contains information of how the light hits an hittable object
 /// </summary>
@@ -42,8 +40,8 @@ struct hit_info
 	{
 		front_face = dot(r.direction, outward_normal) < 0;
 		//normal = outward_normal;
-		normal = front_face ? outward_normal : -outward_normal;
-		//normal = (static_cast<float>(front_face) * 2.0f - 1.0f) * outward_normal;
+		//normal = front_face ? outward_normal : -outward_normal;
+		normal = (static_cast<float>(front_face) * 2.0f - 1.0f) * outward_normal;
 	}
 };
 
@@ -65,11 +63,8 @@ public:
 		};
 	}
 
-	bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info)
+	/*virtual*/ bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info)
 	{
-		if (!USE_TRANSFORM)
-			return hit(base_ray, t_min, t_max, info);
-
 		auto ray = ::ray(
 			multiply_point_fast(inv_transform, base_ray.origin), 
 			glm::mat3(inv_transform) * base_ray.direction

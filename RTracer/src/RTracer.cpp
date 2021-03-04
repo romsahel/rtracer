@@ -2,6 +2,10 @@
 #include <chrono>
 #include <filesystem>
 
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image_write.h"
+#include "stb_image.h"
+
 #include "core/direction3.h"
 #include "core/point3.h"
 #include "core/color.h"
@@ -36,7 +40,7 @@ camera make_cornell_scene(world& world, object_store<material>& materials)
 {
 	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
 	light_material.emission = solid_color::white();
-	light_material.emission_strength = 4.0f;
+	light_material.emission_strength = 5.0f;
 
 	auto& cornell_red = materials.add<lambertian_material>("Cornell red", color(.65f, .05f, .05f));
 	auto& cornell_white = materials.add<lambertian_material>("Cornell white", color(.73f, .73f, .73f));
@@ -77,7 +81,7 @@ camera make_cornell_scene(world& world, object_store<material>& materials)
 
 	auto& light = world.add<rectangle>("light");
 	light.transform = set_position_and_rotation(vec3(0, half_size, 0), 90.0f, vector3::right());
-	light.height = light.width = cornell_size * 0.15f;
+	light.height = light.width = cornell_size * 0.2f;
 	light.material = &light_material;
 	light.update();
 
@@ -160,19 +164,17 @@ camera make_simple_scene(world& world, object_store<material>& materials)
 	light_material.emission = solid_color::white();
 	light_material.emission_strength = 4.0f;
 
-	world.add<sphere>("Ground", point3(0.0f, -100.0f - 0.4f, 0.0f), 100.0f);
-	auto& light = world.add<rectangle>("Light", vector3::zero(), 0.5f, 0.5f);
-	//light.transform = set_position_and_rotation(point3(0.0f, 0.3f, 0.0f), 90.0f, vector3::up());
+	//world.add<sphere>("Ground", point3(0.0f, -100.0f - 0.4f, 0.0f), 100.0f);
+	auto& light = world.add<sphere>("Light", point3(0.0f, 0.0f, -0.8f), 0.25f);
 	light.material = &light_material;
 	light.update();
 
-	world.add<sphere>("Sphere", point3(0.0f, 0.25f - 0.4f, 0.5f), 0.25f).material = &earth_material;
-
+	world.add<sphere>("Sphere", point3(0.0f, 0.0f, -3.0f), 2.0f).material = &earth_material;
 	
 	::camera camera{16.0f / 9.0f};
-	camera.origin = point3(1.5f, 0.0f, 0.5);
-	camera.target = point3(0.0f, 0.0f - 0.4f, 0.0f);
-	camera.vertical_fov = 60.0f;
+	camera.origin = point3(0.0f, 0.0f, 12.0f);
+	camera.target = point3(0.0f, 0.0f, 0.0f);
+	camera.vertical_fov = 20.0f;
 	return camera;
 }
 
@@ -182,11 +184,19 @@ int main()
 
 	object_store<material> materials = material_store();
 
-	//camera camera = make_sphere_scene(world, materials); // average: 179 - 184 (no bvh) || post-opti: 68 - 123 (no bvh)
-	camera camera = make_cornell_scene(world, materials); // average: 133 - 105 (no bvh) || post-opti: 58 - 57 (no bvh)
-	//camera camera = make_simple_scene(world, materials);
-	camera.update();
+	camera camera = [&]() {
+		switch (1)
+		{
+		case 0:
+			return make_sphere_scene(world, materials); // average: 179 - 184 (no bvh) || post-opti: 68 - 123 (no bvh)
+		case 1:
+			return make_cornell_scene(world, materials); // average: 133 - 105 (no bvh) || post-opti: 58 - 57 (no bvh)
+		case 2:
+			return make_simple_scene(world, materials);
+		}
+	}();
 
+	camera.update();
 	material& selection_material = materials.add<lambertian_material>("Selection material", color(1.0f, 0.0, 0.0));
 
 	world.signal_scene_change();
@@ -252,6 +262,10 @@ int main()
 			scene_changed |= gui::draw_color("Background bottom",
 			                                 raytrace_renderer.current_render.settings.background_bottom_color);
 			ImGui::Checkbox("Use BVH", &world.use_bvh);
+			if (ImGui::Button("Save to image"))
+			{
+				raytrace_renderer.save_to_image();
+			}
 		}
 		ImGui::End();
 

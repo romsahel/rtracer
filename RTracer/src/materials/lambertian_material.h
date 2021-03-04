@@ -25,9 +25,10 @@ public:
 
 	bool scatter(const ray&, const hit_info& hit, color& attenuation, ray& scattered) const override
 	{
-		direction3 scatter_direction = direction3(hit.normal + vector3::random_in_hemisphere(hit.normal));
-		if (is_near_zero(scatter_direction))
-			scatter_direction = hit.normal;
+		direction3 scatter_direction = hit.normal;
+		const vec3 random_unit_vector = vector3::random_in_unit_sphere();
+		if (!is_near_zero(random_unit_vector))
+			scatter_direction = hit.normal + normalize(random_unit_vector);
 
 		scattered = ray(hit.point, scatter_direction);
 		attenuation = albedo->value_at(hit.uv_coordinates, hit.point);

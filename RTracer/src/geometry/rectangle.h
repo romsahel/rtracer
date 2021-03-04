@@ -16,15 +16,11 @@ public:
 
 	void update() override
 	{
-		outward_normal = direction3(0.0f, 0.0f, flip_normal * 1.0f);
+		outward_normal = direction3(0.0f, 0.0f, 1.0f);
 		const vec3 offset{width * 0.5f, height * 0.5f, constants::epsilon};
 		m_bbox = aabb(point3(-offset), point3(offset));
-
-		if (USE_TRANSFORM)
-		{
-			inv_transform = inverse(transform);
-			m_bbox.transform(transform);
-		}
+		inv_transform = inverse(transform);
+		m_bbox.transform(transform);
 	}
 
 	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override
@@ -58,8 +54,6 @@ public:
 
 	float width;
 	float height;
-
-	float flip_normal = 1.0;
 
 private:
 	aabb m_bbox;

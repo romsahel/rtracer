@@ -283,11 +283,11 @@ struct raytrace_render_thread
 
 class raytrace_renderer
 {
+	const size_t channels_num = 3;
 public:
 	raytrace_renderer(int image_width, int image_height)
 		: settings{image_width, image_height}, thread(settings)
 	{
-		const size_t channels_num = 3;
 		const size_t pixel_count = static_cast<size_t>(image_width) * image_height;
 
 		current_render.pixels.reserve(pixel_count);
@@ -311,6 +311,14 @@ public:
 				}
 			}
 		}
+	}
+
+	void save_to_image()
+	{
+		stbi_write_jpg("rtracer_output.jpg",
+		               settings.image_width, settings.image_height, channels_num,
+		               current_render.front_buffer().data(),
+		               settings.image_width * channels_num);
 	}
 
 	/// <summary>

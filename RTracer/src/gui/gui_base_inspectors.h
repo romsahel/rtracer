@@ -134,12 +134,6 @@ inline bool draw_hittable_inspector(rectangle* hittable)
 	changed |= gui::draw_double("Height", hittable->height);
 
 	ImGui::SameLine();
-	bool flip = hittable->flip_normal < 0.0f;
-	if (ImGui::Checkbox("Flip normal", &flip))
-	{
-		hittable->flip_normal = flip ? -1.0f : 1.0f;
-		changed = true;
-	}
 
 	return changed;
 }
