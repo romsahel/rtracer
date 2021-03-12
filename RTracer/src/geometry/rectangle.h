@@ -16,7 +16,6 @@ public:
 
 	void update() override
 	{
-		outward_normal = direction3(0.0f, 0.0f, 1.0f);
 		const vec3 offset{width * 0.5f, height * 0.5f, constants::epsilon};
 		m_bbox = aabb(point3(-offset), point3(offset));
 		inv_transform = inverse(transform);
@@ -36,7 +35,8 @@ public:
 			{
 				info.distance = t;
 				info.point = ray.at(info.distance);
-				info.set_face_normal(ray, outward_normal);
+				const direction3 outward_normal(0.0f, 0.0f, 1.0f);
+				info.set_face_normal(ray.direction, outward_normal);
 				info.material = material;
 				info.uv_coordinates = (hitpoint + offset) / (offset + offset);
 				info.object = this;
@@ -57,5 +57,4 @@ public:
 
 private:
 	aabb m_bbox;
-	direction3 outward_normal;
 };

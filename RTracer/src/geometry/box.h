@@ -3,6 +3,13 @@
 #include "rectangle.h"
 #include "core/hittable.h"
 
+constexpr int front = 0;
+constexpr int back = 1;
+constexpr int left = 2;
+constexpr int right = 3;
+constexpr int top = 4;
+constexpr int bottom = 5;
+
 class box : public hittable
 {
 public:
@@ -15,16 +22,16 @@ public:
 	{
 		inv_transform = inverse(transform);
 		
-		m_sides[0].transform = translate(point3(0, 0, -size.z * 0.5f));
+		m_sides[0].transform = translate(point3(0, 0, size.z * 0.5f));
 		m_sides[0].width = size.x;
 		m_sides[0].height = size.y;
 		m_sides[0].update();
-		m_sides[1].transform = translate(point3(0, 0, size.z * 0.5f));
+		m_sides[1].transform = translate(point3(0, 0, -size.z * 0.5f));
 		m_sides[1].width = size.x;
 		m_sides[1].height = size.y;
 		m_sides[1].update();
 
-		m_sides[2].transform = rotate(translate(point3(-size.x * 0.5f, 0, 0)), glm::radians(90.0f), vec3{0.0f, 1.0f, 0.0f});
+		m_sides[2].transform = rotate(translate(point3(-size.x * 0.5f, 0, 0)), glm::radians(-90.0f), vec3{0.0f, 1.0f, 0.0f});
 		m_sides[2].width = size.z;
 		m_sides[2].height = size.y;
 		m_sides[2].update();
@@ -37,7 +44,7 @@ public:
 		m_sides[4].width = size.z;
 		m_sides[4].height = size.x;
 		m_sides[4].update();
-		m_sides[5].transform = rotate(translate(point3(0, -size.y * 0.5f, 0)), glm::radians(90.0f), vec3{1.0f, 0.0f, 0.0f});
+		m_sides[5].transform = rotate(translate(point3(0, -size.y * 0.5f, 0)), glm::radians(-90.0f), vec3{1.0f, 0.0f, 0.0f});
 		m_sides[5].width = size.z;
 		m_sides[5].height = size.x;
 		m_sides[5].update();
@@ -63,6 +70,6 @@ public:
 
 	vec3 size;
 
-private:
+public:
 	rectangle m_sides[6];
 };

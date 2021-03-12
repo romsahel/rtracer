@@ -80,10 +80,10 @@ public:
 		box = aabb::surrounding(box_left, box_right);
 	}
 
-	//bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info) override
-	//{
-	//	return hit(base_ray, t_min, t_max, info);
-	//}
+	bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info) override
+	{
+		return hit(base_ray, t_min, t_max, info);
+	}
 	
 	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override
 	{

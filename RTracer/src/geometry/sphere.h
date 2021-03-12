@@ -53,10 +53,12 @@ public:
 				info.distance = root;
 				info.point = ray.at(info.distance);
 				const direction3 outward_normal = info.point / radius;
-				info.set_face_normal(ray, outward_normal);
+				info.set_face_normal(ray.direction, outward_normal);
 				info.material = material;
+				
 				set_uv_at(outward_normal, info.uv_coordinates);
 				info.object = this;
+
 			}
 		}
 

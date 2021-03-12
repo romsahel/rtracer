@@ -57,12 +57,9 @@ namespace gui
 	bool draw_vec3(const char* label, vec3& value, float speed = 0.1f)
 	{
 		ImGui::PushID(&value);
-		//float* tmp = gui::vec3_to_temporary_float3(value);
 		const bool changed = ImGui::DragFloat3(label, glm::value_ptr(value), speed);
 		ImGui::PopID();
 
-		//if (changed)
-		//	value = point3(gui::float3_to_vec3(tmp));
 		return changed;
 	}
 

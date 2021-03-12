@@ -137,73 +137,56 @@ inline bool draw_hittable_inspector(rectangle* hittable)
 
 	return changed;
 }
+bool draw_transform_inspector(hittable* hittable);
 
 inline bool draw_hittable_inspector(box* hittable)
 {
 	bool changed = false;
 	changed |= gui::draw_vec3("Width", hittable->size);
-
+	
 	return changed;
 }
 
-//template <int axis>
-//inline bool draw_hittable_inspector(rotate_base<axis>* hittable, const char* label)
-//{
-//	bool changed = false;
-//	changed |= gui::draw_double(label, hittable->angle);
-//	return changed;
-//}
-//
-//inline bool draw_hittable_inspector(transform_root* hittable)
-//{
-//	bool changed = false;
-//	if (auto* translation = dynamic_cast<translator*>(hittable); translation != nullptr)
-//	{
-//		changed |= gui::draw_vec3("Position", translation->position);
-//	}
-//	else
-//	{
-//		if (auto* cast = dynamic_cast<rotate_x*>(hittable); cast != nullptr)
-//			changed |= draw_hittable_inspector(cast, "x-rotation");
-//		if (auto* cast = dynamic_cast<rotate_y*>(hittable); cast != nullptr)
-//			changed |= draw_hittable_inspector(cast, "y-rotation");
-//		if (auto* cast = dynamic_cast<rotate_z*>(hittable); cast != nullptr)
-//			changed |= draw_hittable_inspector(cast, "z-rotation");
-//	}
-//
-//	changed |= draw_hittable_inspector(hittable->object, false);
-//
-//	return changed;
-//}
+bool draw_transform_inspector(hittable* hittable)
+{
+	bool changed = false;
+
+	static ::hittable* previous_selection = nullptr;
+	static glm::vec3 euler{0.0f};
+	static vec3 translation{0.0f};
+
+	if (previous_selection != hittable)
+	{
+		static vec3 scale, skew;
+		static vec4 perspective;
+		static glm::quat orientation;
+		decompose(hittable->transform, scale, orientation, translation, skew, perspective);
+		euler = glm::degrees(glm::eulerAngles(glm::conjugate(orientation)));
+
+		previous_selection = hittable;
+	}
+		
+	ImGui::PushID(hittable);
+	changed |= gui::draw_vec3("Position", translation);
+	changed |= gui::draw_vec3("Rotation", euler);
+	ImGui::PopID();
+
+	if (changed)
+	{
+		auto q = glm::quat(radians(euler));
+		hittable->transform = translate(translation) * mat4_cast(q);
+		hittable->inv_transform = inverse(hittable->transform);
+	}
+
+	return changed;
+}
 
 inline bool draw_hittable_inspector(hittable* hittable, bool with_header)
 {
 	bool changed = false;
 	if (!with_header || ImGui::CollapsingHeader(hittable->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		static ::hittable* previous_selection = nullptr;
-		static glm::vec3 euler{0.0f};
-		static vec3 translation{0.0f};
-
-		if (previous_selection != hittable)
-		{
-			static vec3 scale, skew;
-			static vec4 perspective;
-			static glm::quat orientation;
-			decompose(hittable->transform, scale, orientation, translation, skew, perspective);
-			euler = glm::degrees(glm::eulerAngles(glm::conjugate(orientation)));
-
-			previous_selection = hittable;
-		}
-		
-		changed |= gui::draw_vec3("Position", translation);
-		changed |= gui::draw_vec3("Rotation", euler);
-		if (changed)
-		{
-			auto q = glm::quat(radians(euler));
-			hittable->transform = translate(translation) * mat4_cast(q);
-			hittable->inv_transform = inverse(hittable->transform);
-		}
+		changed |= draw_transform_inspector(hittable);
 		if (auto* cast = dynamic_cast<sphere*>(hittable); cast != nullptr)
 			changed |= draw_hittable_inspector(cast);
 		if (auto* cast = dynamic_cast<rectangle*>(hittable); cast != nullptr)

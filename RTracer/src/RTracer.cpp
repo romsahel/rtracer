@@ -3,6 +3,8 @@
 #include <filesystem>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <string>
+
 #include "stb_image_write.h"
 #include "stb_image.h"
 
@@ -40,62 +42,76 @@ camera make_cornell_scene(world& world, object_store<material>& materials)
 {
 	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
 	light_material.emission = solid_color::white();
-	light_material.emission_strength = 5.0f;
+	light_material.emission_strength = 4.0f;
 
 	auto& cornell_red = materials.add<lambertian_material>("Cornell red", color(.65f, .05f, .05f));
 	auto& cornell_white = materials.add<lambertian_material>("Cornell white", color(.73f, .73f, .73f));
 	auto& cornell_green = materials.add<lambertian_material>("Cornell green", color(.12f, .45f, .15f));
 
-	float cornell_size = 555.0f;
-	auto half_size = cornell_size * 0.5f;
+	vec3 size = vec3(2.0f);
 
-	auto& right_wall = world.add<rectangle>("right_wall");
-	right_wall.transform = set_position_and_rotation(vec3(half_size, 0, 0), 90.0f, vector3::up());
-	right_wall.height = right_wall.width = cornell_size;
-	right_wall.material = &cornell_red;
-	right_wall.update();
+	rectangle* walls[] = {
+		&world.add<rectangle>("back_wall"),
+		&world.add<rectangle>("right_wall"),
+		&world.add<rectangle>("left_wall"),
+		&world.add<rectangle>("top_wall"),
+		&world.add<rectangle>("bottom_wall"),
+	};
 
-	auto& left_wall = world.add<rectangle>("left_wall");
-	left_wall.transform = set_position_and_rotation(vec3(-half_size, 0, 0), 90.0f, vector3::up());
-	left_wall.height = left_wall.width = cornell_size;
-	left_wall.material = &cornell_green;
-	left_wall.update();
 
-	auto& back_wall = world.add<rectangle>("back_wall");
-	back_wall.transform = set_position_and_rotation(vec3(0, 0, half_size), 0.0f, vector3::up());
-	back_wall.height = back_wall.width = cornell_size;
-	back_wall.material = &cornell_white;
-	back_wall.update();
+	walls[1 - 1]->transform = translate(point3(0, 0, -size.z * 0.5f));
+	walls[1 - 1]->width = size.x;
+	walls[1 - 1]->height = size.y;
+	walls[1 - 1]->material = &cornell_white;
+	walls[1 - 1]->update();
 
-	auto& bottom_wall = world.add<rectangle>("bottom_wall");
-	bottom_wall.transform = set_position_and_rotation(vec3(0, -half_size, 0), 90.0f, vector3::right());
-	bottom_wall.height = bottom_wall.width = cornell_size;
-	bottom_wall.material = &cornell_white;
-	bottom_wall.update();
+	walls[2 - 1]->transform = rotate(translate(point3(-size.x * 0.5f, 0, 0)), glm::radians(-90.0f),
+	                                 vec3{0.0f, 1.0f, 0.0f});
+	walls[2 - 1]->width = size.z;
+	walls[2 - 1]->height = size.y;
+	walls[2 - 1]->material = &cornell_green;
+	walls[2 - 1]->update();
+	walls[3 - 1]->transform = rotate(translate(point3(size.x * 0.5f, 0, 0)), glm::radians(90.0f),
+	                                 vec3{0.0f, 1.0f, 0.0f});
+	walls[3 - 1]->width = size.z;
+	walls[3 - 1]->height = size.y;
+	walls[3 - 1]->update();
+	walls[3 - 1]->material = &cornell_red;
 
-	auto& top_wall = world.add<rectangle>("top_wall");
-	top_wall.transform = set_position_and_rotation(vec3(0, half_size, 0), 90.0f, vector3::right());
-	top_wall.height = top_wall.width = cornell_size;
-	top_wall.material = &cornell_white;
-	top_wall.update();
+	walls[4 - 1]->transform = rotate(translate(point3(0, size.y * 0.5f, 0)), glm::radians(-90.0f),
+	                                 vec3{1.0f, 0.0f, 0.0f});
+	walls[4 - 1]->width = size.z;
+	walls[4 - 1]->height = size.x;
+	walls[4 - 1]->material = &cornell_white;
+	walls[4 - 1]->update();
+	walls[5 - 1]->transform = rotate(translate(point3(0, -size.y * 0.5f, 0)), glm::radians(90.0f),
+	                                 vec3{1.0f, 0.0f, 0.0f});
+	walls[5 - 1]->width = size.z;
+	walls[5 - 1]->height = size.x;
+	walls[5 - 1]->material = &cornell_white;
+	walls[5 - 1]->update();
 
 	auto& light = world.add<rectangle>("light");
-	light.transform = set_position_and_rotation(vec3(0, half_size, 0), 90.0f, vector3::right());
-	light.height = light.width = cornell_size * 0.2f;
+	light.transform = set_position_and_rotation(vec3(0, size.y * 0.45f, 0), 90.0f, vector3::right());
+	light.height = light.width = 0.447f;
 	light.material = &light_material;
 	light.update();
 
-	auto& right_box = world.add<box>("Right box", point3(165));
-	right_box.transform = set_position_and_rotation(vec3(-90, -195, -60), -18.0f, vector3::up());
+	auto& right_box = world.add<box>("Tall box", vec3(0.6f, 1.1f, 0.6f));
+	right_box.transform = set_position_and_rotation(vec3(-0.4f, -0.45f, -0.45f), 18.0f, vector3::up());
 	right_box.update();
 
-	auto& left_box = world.add<box>("Left box", point3(165, 330, 165));
-	left_box.transform = set_position_and_rotation(vec3(90, -128, 100), 15.0f, vector3::up());
+	auto& left_box = world.add<box>("Small box", vec3(0.6f));
+	left_box.transform = set_position_and_rotation(vec3(0.3f, -0.7f, 0.25f), -15.0f, vector3::up());
 	left_box.update();
-	
-	::camera camera{4.0f / 3.0f};
-	camera.origin = point3(0.0f, 0.0f, -835);
-	camera.target = point3(0.0f, -35.0f, 0.0f);
+
+	//auto& sphere = world.add<::sphere>("Sphere", vec3(0.3f, -0.7f + 0.65f, 0.25f), 0.25f);
+	//sphere.material = &materials.add<metal_material>("Chrome", color(0.8f, 0.8f, 0.8f), 0.05f);
+	//sphere.update();
+
+	::camera camera{1.0f};
+	camera.origin = point3(0.0f, 0.0f, size.z * 2.0f);
+	camera.target = point3(0.0f, 0.0f, 0.0f);
 	camera.vertical_fov = 40.0f;
 	return camera;
 }
@@ -113,7 +129,7 @@ camera make_sphere_scene(world& world, object_store<material>& materials)
 	materials.add<lambertian_material>("Checker", checker_tex);
 	materials.add<lambertian_material>("Earth", texture_store().add<image_texture>("earthmap.jpg"));
 
-	world.add<sphere>("Ground", point3(0.0f, -1.25f - 100.0f, 0.0f), 100.0f);
+	world.add<sphere>("Ground", point3(0.0f, -0.25f - 100.0f, 0.0f), 100.0f);
 
 	char name[] = "Sphere 00";
 	for (int z = 0; z < 10; z++)
@@ -131,7 +147,7 @@ camera make_sphere_scene(world& world, object_store<material>& materials)
 	}
 
 	auto& wall_left = world.add<rectangle>("wall_left", point3(5.0f, 0.0f, 0.0f), 30.0f, 5.0f);
-	wall_left.transform = rotate(wall_left.transform, glm::radians(90.0f), vec3(0.0f, 1.0f, 0.0f));
+	wall_left.transform = rotate(wall_left.transform, glm::radians(-90.0f), vec3(0.0f, 1.0f, 0.0f));
 	wall_left.update();
 
 	auto& wall_right = world.add<rectangle>("wall_right", point3(-5.0f, 0.0f, 0.0f), 30.0f, 5.0f);
@@ -141,6 +157,10 @@ camera make_sphere_scene(world& world, object_store<material>& materials)
 	auto& wall_top = world.add<rectangle>("wall_top", point3(0.0f, 6.0f, 0.0f), 30.0f, 30.0f);
 	wall_top.transform = rotate(wall_top.transform, glm::radians(90.0f), vec3(1.0f, 0.0f, 0.0f));
 	wall_top.update();
+
+	//auto& wall_blocker = world.add<rectangle>("wall_blocker", point3(0.0f, 0.2f, 1.9f), 5.0f, 5.0f);
+	//wall_blocker.transform = rotate(wall_blocker.transform, glm::radians(45.0f), vec3(0.0f, 0.0f, 1.0f));
+	//wall_blocker.update();
 
 	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
 	light_material.emission = solid_color::white();
@@ -159,7 +179,8 @@ camera make_sphere_scene(world& world, object_store<material>& materials)
 
 camera make_simple_scene(world& world, object_store<material>& materials)
 {
-	auto& earth_material = materials.add<lambertian_material>("Earth", texture_store().add<image_texture>("earthmap.jpg"));
+	auto& earth_material = materials.add<lambertian_material>(
+		"Earth", texture_store().add<image_texture>("earthmap.jpg"));
 	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
 	light_material.emission = solid_color::white();
 	light_material.emission_strength = 4.0f;
@@ -170,7 +191,31 @@ camera make_simple_scene(world& world, object_store<material>& materials)
 	light.update();
 
 	world.add<sphere>("Sphere", point3(0.0f, 0.0f, -3.0f), 2.0f).material = &earth_material;
-	
+
+	::camera camera{16.0f / 9.0f};
+	camera.origin = point3(0.0f, 0.0f, 12.0f);
+	camera.target = point3(0.0f, 0.0f, 0.0f);
+	camera.vertical_fov = 20.0f;
+	return camera;
+}
+
+camera make_box_scene(world& world, object_store<material>& materials)
+{
+	world.add<rectangle>("1");
+	world.add<rectangle>("2");
+	world.add<rectangle>("3");
+	world.add<rectangle>("4");
+
+	//world.add<box>("box");
+
+	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
+	light_material.emission = solid_color::white();
+	light_material.emission_strength = 4.0f;
+
+	auto& light = world.add<sphere>("Light", point3(0.0f, 0.0f, -0.8f), 0.25f);
+	light.material = &light_material;
+	light.update();
+
 	::camera camera{16.0f / 9.0f};
 	camera.origin = point3(0.0f, 0.0f, 12.0f);
 	camera.target = point3(0.0f, 0.0f, 0.0f);
@@ -184,7 +229,8 @@ int main()
 
 	object_store<material> materials = material_store();
 
-	camera camera = [&]() {
+	camera camera = [&]()
+	{
 		switch (1)
 		{
 		case 0:
@@ -193,7 +239,10 @@ int main()
 			return make_cornell_scene(world, materials); // average: 133 - 105 (no bvh) || post-opti: 58 - 57 (no bvh)
 		case 2:
 			return make_simple_scene(world, materials);
+		case 3:
+			return make_box_scene(world, materials);
 		}
+		return make_simple_scene(world, materials);
 	}();
 
 	camera.update();
@@ -204,10 +253,16 @@ int main()
 	gui::initialize_opengl();
 
 	// output settings
-	const int image_width = 400;
+	const int image_width = 600;
 	const int image_height = static_cast<int>(image_width / camera.aspect_ratio());
 	raytrace_renderer raytrace_renderer{image_width, image_height};
+	raytrace_renderer.current_render.settings.background_bottom_color = color(0.2f);
+	raytrace_renderer.current_render.settings.background_top_color = color(0.2f);
 	raytrace_renderer.current_render.settings.background_strength = 0.05f;
+
+	hit_info ahit{&lambertian_material::default_material()};
+	world.hit(ray(point3(0.0f), direction3(0.0f, 0.0f, 1.0f)), 0.001f, constants::infinity, ahit);
+
 	raytrace_renderer.render(camera, world);
 
 	selection_overlay selection_overlay{raytrace_renderer.current_render};
@@ -264,7 +319,9 @@ int main()
 			ImGui::Checkbox("Use BVH", &world.use_bvh);
 			if (ImGui::Button("Save to image"))
 			{
-				raytrace_renderer.save_to_image();
+				std::string filename = "rtracer_" + std::to_string(average_render_time) + "ms_" + std::to_string(
+					static_cast<int>(raytrace_renderer.current_render.iteration)) + ".jpg";
+				raytrace_renderer.save_to_image(filename);
 			}
 		}
 		ImGui::End();
@@ -384,7 +441,7 @@ int main()
 
 
 		gui::end_frame();
-		
+
 		if (is_rendering && render_prev_iteration != raytrace_renderer.current_render.iteration)
 		{
 			if (scene_changed)

@@ -71,7 +71,7 @@ public:
 		{
 			float t0 = (minimum[i] - r.origin[i]) * r.inv_direction[i];
 			float t1 = (maximum[i] - r.origin[i]) * r.inv_direction[i];
-			if (r.inv_direction[i] < 0.0)
+			if (r.inv_direction[i] < 0.0f)
 				std::swap(t0, t1);
 			t_min = t0 > t_min ? t0 : t_min;
 			t_max = t1 < t_max ? t1 : t_max;

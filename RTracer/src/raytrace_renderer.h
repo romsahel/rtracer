@@ -283,7 +283,7 @@ struct raytrace_render_thread
 
 class raytrace_renderer
 {
-	const size_t channels_num = 3;
+	const int channels_num = 3;
 public:
 	raytrace_renderer(int image_width, int image_height)
 		: settings{image_width, image_height}, thread(settings)
@@ -313,9 +313,9 @@ public:
 		}
 	}
 
-	void save_to_image()
+	void save_to_image(const std::string& filename)
 	{
-		stbi_write_jpg("rtracer_output.jpg",
+		stbi_write_jpg(filename.c_str(),
 		               settings.image_width, settings.image_height, channels_num,
 		               current_render.front_buffer().data(),
 		               settings.image_width * channels_num);

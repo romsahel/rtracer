@@ -28,7 +28,7 @@ public:
 		direction3 scatter_direction = hit.normal;
 		const vec3 random_unit_vector = vector3::random_in_unit_sphere();
 		if (!is_near_zero(random_unit_vector))
-			scatter_direction = hit.normal + normalize(random_unit_vector);
+			scatter_direction += normalize(random_unit_vector);
 
 		scattered = ray(hit.point, scatter_direction);
 		attenuation = albedo->value_at(hit.uv_coordinates, hit.point);

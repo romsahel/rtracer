@@ -1,5 +1,7 @@
 ﻿#pragma once
 
+#include <glm/gtx/matrix_decompose.hpp>
+
 #include "direction3.h"
 #include "point3.h"
 #include "ray.h"
@@ -15,20 +17,20 @@ class aabb;
 struct hit_info
 {
 	// point in world space where the hit occurred
-	point3 point;
+	point3 point = point3(0.0f);
 	// direction for the bouncing ray
-	direction3 normal;
+	direction3 normal = direction3(0.0f);
 	// distance from the origin of the raycast to the hit point
 	float distance = constants::infinity;
 	// true if the raycast hit the object from its frontside ; false if it hit from the backside
 	bool front_face = false;
 
 	// material of the hit object
-	material* material;
+	material* material = nullptr;
 	// uv coordinate of the material at the hitpoint
-	vec2 uv_coordinates;
+	vec2 uv_coordinates = vec2(0.0f);
 
-	hittable* object;
+	hittable* object = nullptr;
 
 	explicit hit_info(::material* material)
 		: material(material)
@@ -36,11 +38,9 @@ struct hit_info
 	}
 
 	// set both front_face and normal property using the raycast and the outward normal to compute
-	inline void set_face_normal(const ray& r, const direction3& outward_normal)
+	inline void set_face_normal(const direction3& ray_direction, const direction3& outward_normal)
 	{
-		front_face = dot(r.direction, outward_normal) < 0;
-		//normal = outward_normal;
-		//normal = front_face ? outward_normal : -outward_normal;
+		front_face = dot(ray_direction, outward_normal) < 0;
 		normal = (static_cast<float>(front_face) * 2.0f - 1.0f) * outward_normal;
 	}
 };
@@ -63,17 +63,19 @@ public:
 		};
 	}
 
-	/*virtual*/ bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info)
+	virtual bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info)
 	{
-		auto ray = ::ray(
-			multiply_point_fast(inv_transform, base_ray.origin), 
+		const auto transformed_ray = ::ray(
+			multiply_point_fast(inv_transform, base_ray.origin),
 			glm::mat3(inv_transform) * base_ray.direction
 		);
-		if (!hit(ray, t_min, t_max, info))
+
+		if (!hit(transformed_ray, t_min, t_max, info))
 			return false;
 
+		info.normal = glm::mat3(transform) * info.normal;
 		info.point = multiply_point_fast(transform, info.point);
-		info.set_face_normal(ray, glm::mat3(transform) * info.normal);
+
 		return true;
 	}
 
