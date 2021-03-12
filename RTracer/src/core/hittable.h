@@ -2,6 +2,8 @@
 
 #include <glm/gtx/matrix_decompose.hpp>
 
+
+#include "aabb.h"
 #include "direction3.h"
 #include "point3.h"
 #include "ray.h"
@@ -9,7 +11,6 @@
 #include "materials/material.h"
 
 class hittable;
-class aabb;
 
 /// <summary>
 /// contains information of how the light hits an hittable object
@@ -80,7 +81,6 @@ public:
 	}
 
 	virtual bool hit(const ray& ray, float t_min, float t_max, hit_info& info) = 0;
-	virtual bool bounding_box(aabb& output_aabb) const = 0;
 
 	virtual void update()
 	{
@@ -94,4 +94,5 @@ public:
 	material* material;
 	glm::mat4 transform = glm::identity<glm::mat4>();
 	glm::mat4 inv_transform = glm::identity<glm::mat4>();
+	aabb bbox;
 };

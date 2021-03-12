@@ -19,8 +19,6 @@ public:
 		inv_transform = inverse(transform);
 	}
 
-	aabb bbox;
-
 	void update() override
 	{
 		const vec3 size(radius);
@@ -63,12 +61,6 @@ public:
 		}
 
 		return is_hit;
-	}
-
-	bool bounding_box(aabb& output_aabb) const override
-	{
-		output_aabb = bbox;
-		return true;
 	}
 
 	float radius;

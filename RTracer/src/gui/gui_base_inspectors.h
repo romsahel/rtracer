@@ -219,11 +219,9 @@ inline bool draw_inspector(camera& camera, void** selection)
 		}
 
 		ImGui::Separator();
-		aabb bbox;
-		hittable->bounding_box(bbox);
-		gui::display_vec3("Minimum", bbox.minimum);
-		gui::display_vec3("Maximum", bbox.maximum);
-		gui::display_vec3("Size", bbox.size());
+		gui::display_vec3("Minimum", hittable->bbox.minimum);
+		gui::display_vec3("Maximum", hittable->bbox.maximum);
+		gui::display_vec3("Size", hittable->bbox.size());
 
 		return changed;
 	}

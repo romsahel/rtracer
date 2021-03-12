@@ -8,12 +8,8 @@
 
 inline bool box_compare(const hittable* a, const hittable* b, int axis)
 {
-	aabb box_a;
-	aabb box_b;
-
-	if (!a->bounding_box(box_a) || !b->bounding_box(box_b))
-		std::cerr << "No bounding box in bvh_node constructor." << std::endl;
-
+	const aabb& box_a = a->bbox;
+	const aabb& box_b = b->bbox;
 	return box_a.minimum[axis] < box_b.maximum[axis] && box_a.minimum[axis] < box_b.minimum[axis];
 }
 
@@ -72,12 +68,7 @@ public:
 			}
 		}
 
-		aabb box_left, box_right;
-
-		if (!left->bounding_box(box_left) || !right->bounding_box(box_right))
-			std::cerr << "No bounding box in bvh_node constructor.\n";
-
-		box = aabb::surrounding(box_left, box_right);
+		bbox = aabb::surrounding(left->bbox, right->bbox);
 	}
 
 	bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info) override
@@ -87,19 +78,13 @@ public:
 	
 	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override
 	{
-		if (box.hit(ray, t_min, t_max))
+		if (bbox.hit(ray, t_min, t_max))
 		{
 			const bool hit_left = left->base_hit(ray, t_min, t_max, info);
 			const bool hit_right = right->base_hit(ray, t_min, info.distance, info);
 			return hit_left || hit_right;
 		}
 		return false;
-	}
-
-	bool bounding_box(aabb& output_aabb) const override
-	{
-		output_aabb = box;
-		return true;
 	}
 
 	~bvh_node() override
@@ -113,5 +98,4 @@ public:
 
 	hittable* left;
 	hittable* right;
-	aabb box;
 };

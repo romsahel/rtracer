@@ -16,10 +16,11 @@ public:
 
 	void update() override
 	{
-		const vec3 offset{width * 0.5f, height * 0.5f, constants::epsilon};
-		m_bbox = aabb(point3(-offset), point3(offset));
 		inv_transform = inverse(transform);
-		m_bbox.transform(transform);
+
+		const vec3 offset{width * 0.5f, height * 0.5f, constants::epsilon};
+		bbox = aabb(point3(-offset), point3(offset));
+		bbox.transform(transform);
 	}
 
 	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override
@@ -46,15 +47,6 @@ public:
 		return is_hit;
 	}
 
-	bool bounding_box(aabb& output_aabb) const override
-	{
-		output_aabb = m_bbox;
-		return true;
-	}
-
 	float width;
 	float height;
-
-private:
-	aabb m_bbox;
 };

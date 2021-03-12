@@ -3,13 +3,6 @@
 #include "rectangle.h"
 #include "core/hittable.h"
 
-constexpr int front = 0;
-constexpr int back = 1;
-constexpr int left = 2;
-constexpr int right = 3;
-constexpr int top = 4;
-constexpr int bottom = 5;
-
 class box : public hittable
 {
 public:
@@ -21,33 +14,46 @@ public:
 	void update() override
 	{
 		inv_transform = inverse(transform);
-		
+
+		// front
 		m_sides[0].transform = translate(point3(0, 0, size.z * 0.5f));
 		m_sides[0].width = size.x;
 		m_sides[0].height = size.y;
 		m_sides[0].update();
+
+		// back
 		m_sides[1].transform = translate(point3(0, 0, -size.z * 0.5f));
 		m_sides[1].width = size.x;
 		m_sides[1].height = size.y;
 		m_sides[1].update();
 
+		// left
 		m_sides[2].transform = rotate(translate(point3(-size.x * 0.5f, 0, 0)), glm::radians(-90.0f), vec3{0.0f, 1.0f, 0.0f});
 		m_sides[2].width = size.z;
 		m_sides[2].height = size.y;
 		m_sides[2].update();
+
+		// right
 		m_sides[3].transform = rotate(translate(point3(size.x * 0.5f, 0, 0)), glm::radians(90.0f), vec3{0.0f, 1.0f, 0.0f});
 		m_sides[3].width = size.z;
 		m_sides[3].height = size.y;
 		m_sides[3].update();
 
+		// top
 		m_sides[4].transform = rotate(translate(point3(0, size.y * 0.5f, 0)), glm::radians(90.0f), vec3{1.0f, 0.0f, 0.0f});
 		m_sides[4].width = size.z;
 		m_sides[4].height = size.x;
 		m_sides[4].update();
+
+		// bottom
 		m_sides[5].transform = rotate(translate(point3(0, -size.y * 0.5f, 0)), glm::radians(-90.0f), vec3{1.0f, 0.0f, 0.0f});
 		m_sides[5].width = size.z;
 		m_sides[5].height = size.x;
 		m_sides[5].update();
+
+		const auto extent = vec3(size * 0.5f);
+		bbox = aabb(point3(-extent), point3(extent));
+		bbox.transform(transform);
 	}
 
 	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override
@@ -60,16 +66,8 @@ public:
 		return is_hit;
 	}
 
-	bool bounding_box(aabb& output_aabb) const override
-	{
-		auto extent = vec3(size * 0.5f);
-		output_aabb = aabb(point3(-extent), point3(extent));
-		output_aabb.transform(transform);
-		return true;
-	}
-
 	vec3 size;
 
-public:
+private:
 	rectangle m_sides[6];
 };
