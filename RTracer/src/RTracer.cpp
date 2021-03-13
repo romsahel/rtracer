@@ -318,7 +318,7 @@ int main()
 			if (ImGui::Button("Save to image"))
 			{
 				std::string filename = "rtracer_" + std::to_string(average_render_time) + "ms_" + std::to_string(
-					static_cast<int>(raytrace_renderer.current_render.iteration)) + ".jpg";
+					static_cast<int>(raytrace_renderer.current_render.iteration)) + "total " + std::to_string(total_render_duration) + "_" + ".jpg";
 				raytrace_renderer.save_to_image(filename);
 			}
 		}
