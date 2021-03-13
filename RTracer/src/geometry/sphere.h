@@ -21,6 +21,8 @@ public:
 
 	void update() override
 	{
+		inv_transform = inverse(transform);
+
 		const vec3 size(radius);
 		bbox = aabb(point3(-size), point3(size));
 		bbox.transform(transform);
@@ -61,6 +63,13 @@ public:
 		}
 
 		return is_hit;
+	}
+
+	std::shared_ptr<serializable_node_base> serialize() override
+	{
+		auto node = hittable::serialize();
+		node->children.push_back(std::make_shared<serializable_node<float>>("Radius", &radius));
+		return node;
 	}
 
 	float radius;

@@ -39,7 +39,17 @@ public:
 
 	static lambertian_material& default_material()
 	{
-		static lambertian_material value{"default lambertian", color::gray()};
+		static lambertian_material value{"Default Lambertian", color::gray()};
 		return value;
+	}
+
+	std::shared_ptr<serializable_node_base> serialize() override
+	{
+		return std::make_shared<serializable_node_base>(
+			name, serializable_list{
+				albedo->serialize("Albedo"),
+				material::serialize()
+			}
+		);
 	}
 };

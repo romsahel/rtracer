@@ -55,3 +55,18 @@ public:
 private:
 	GLuint m_rendererId = 999;
 };
+
+class gui_image_view
+{
+public:
+	gui_image_view(int width, int height, stbi_uc* data)
+		: width(width),
+		  height(height),
+		  data(data)
+	{
+	}
+
+	int width = -1;
+	int height = -1;
+	stbi_uc* data = nullptr;
+};

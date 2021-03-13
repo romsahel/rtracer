@@ -1,53 +1,107 @@
 ﻿#pragma once
 #include <string>
 #include <vector>
+#include "core/color.h"
 
-struct serializable_node_root;
+class gui_image_view;
+struct serializable_node_base;
 template <typename TValue>
 struct serializable_node;
 
 class serializer
 {
 public:
-	virtual bool serialize_root(serializable_node_root* root) = 0;
-	virtual bool serialize(const std::string& name, double* value) = 0;
+	virtual ~serializer() = default;
+	virtual bool serialize_root(serializable_node_base* root) = 0;
+	virtual bool serialize(const std::string& name, float* value) = 0;
+	virtual bool serialize(const std::string& name, vec3* value) = 0;
+	virtual bool serialize(const std::string& name, vec2* value) = 0;
+	virtual bool serialize(const std::string& name, color* value) = 0;
+	virtual bool serialize(const std::string& name, gui_image_view* value) = 0;
 };
 
 
-struct serializable_node_root
+using serializable_list = std::initializer_list<std::shared_ptr<serializable_node_base>>;
+
+class serializable_change_listener
 {
-	serializable_node_root(const std::string& name, const std::initializer_list<serializable_node_root*>& children)
+public:
+	virtual ~serializable_change_listener() = default;
+
+	virtual void on_change()
+	{
+	}
+};
+
+
+struct serializable_node_base
+{
+	serializable_node_base(const std::string& name, const serializable_list& children)
 		: name(name),
 		  children(children)
 	{
 	}
 
-	virtual bool visit(serializer& serializer)
+	serializable_node_base(const std::string& name)
+		: name(name)
 	{
-		return false;
+	}
+
+	virtual bool visit(serializer* serializer)
+	{
+		return serializer->serialize_root(this);
+	}
+
+	void notify_change()
+	{
+		for (auto && listener : change_listeners)
+		{
+			listener->on_change();
+		}
 	}
 
 public:
+	virtual ~serializable_node_base() = default;
 	std::string name;
+	std::vector<serializable_change_listener*> change_listeners;
 public:
-	std::vector<serializable_node_root*> children{};
+	std::vector<std::shared_ptr<serializable_node_base>> children{};
 };
 
 template <typename TValue>
-struct serializable_node : serializable_node_root
+struct serializable_node : serializable_node_base
 {
 	serializable_node(const std::string& name, TValue* value,
-	                  const std::initializer_list<serializable_node_root*>& children)
-		: serializable_node_root(name, children)
-		, value(value)
+	                  const serializable_list& children)
+		: serializable_node_base(name, children)
+		  , value(value)
 	{
 	}
 
-	bool visit(serializer& serializer) override
+	serializable_node(const std::string& name, TValue* value)
+		: serializable_node_base(name)
+		  , value(value)
 	{
-		bool changed = false;
-		serializer.serialize(name, value);
-		for (serializable_node_root* child : children)
+	}
+	template <class... Args>
+	static std::shared_ptr<serializable_node<TValue>> make_node(const std::string& name, Args&&... args)
+	{
+		auto ptr = new TValue(std::forward<Args>(args)...);
+		auto node = std::make_shared<serializable_node<TValue>>(name, ptr);
+		node->manage = true;
+		return node;
+	}
+
+	~serializable_node()
+	{
+		if (manage)
+			free(value);
+	}
+	
+	bool visit(serializer* serializer) override
+	{
+		bool changed = serializer->serialize(name, value);
+		for (std::shared_ptr<serializable_node_base> child : children)
 		{
 			changed |= child->visit(serializer);
 		}
@@ -56,37 +110,6 @@ struct serializable_node : serializable_node_root
 	}
 
 	TValue* value;
-};
+	bool manage = false;
 
-class inspector_serializer : public serializer
-{
-public:
-	bool serialize_root(serializable_node_root* root) override
-	{
-		bool changed = false;
-		if (ImGui::CollapsingHeader(root->name.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
-		{
-			for (serializable_node_root* child : root->children)
-			{
-				changed |= child->visit(*this);
-			}
-		}
-
-		return changed;
-	}
-
-	bool serialize(const std::string& name, double* value) override
-	{
-		return gui::draw_double(name.c_str(), *value);
-	}
-
-	bool serialize(const std::string& name, vec3* value)
-	{
-		return gui::draw_vec3(name.c_str(), *value);
-	}
-
-	bool serialize(const std::string& name, color* value)
-	{
-		return gui::draw_color(name.c_str(), *value);
-	}
 };

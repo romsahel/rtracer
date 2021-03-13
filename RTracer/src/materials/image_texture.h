@@ -40,6 +40,11 @@ public:
 		return color(color_scale * pixel_data[0], color_scale * pixel_data[1], color_scale * pixel_data[2]);
 	}
 
+	std::shared_ptr<serializable_node_base> serialize() override
+	{
+		return serializable_node<gui_image_view>::make_node("Image", width, height, data);
+	}
+
 	stbi_uc* data = nullptr;
 	int width = -1;
 	int height = -1;

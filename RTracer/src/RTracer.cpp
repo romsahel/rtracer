@@ -32,6 +32,9 @@
 #include "materials/dieletric_material.h"
 #include "materials/image_texture.h"
 
+#include "serializable_node.h"
+#include "thread_pool.h"
+
 
 glm::mat4 set_position_and_rotation(const vec3& position, float angle, const vec3& axis)
 {
@@ -58,42 +61,37 @@ camera make_cornell_scene(world& world, object_store<material>& materials)
 		&world.add<rectangle>("bottom_wall"),
 	};
 
-
+	
 	walls[1 - 1]->transform = translate(point3(0, 0, -size.z * 0.5f));
-	walls[1 - 1]->width = size.x;
-	walls[1 - 1]->height = size.y;
+	walls[1 - 1]->size = vec2(size.x, size.y);
 	walls[1 - 1]->material = &cornell_white;
 	walls[1 - 1]->update();
 
 	walls[2 - 1]->transform = rotate(translate(point3(-size.x * 0.5f, 0, 0)), glm::radians(-90.0f),
 	                                 vec3{0.0f, 1.0f, 0.0f});
-	walls[2 - 1]->width = size.z;
-	walls[2 - 1]->height = size.y;
+	walls[2 - 1]->size = vec2(size.z, size.y);
 	walls[2 - 1]->material = &cornell_green;
 	walls[2 - 1]->update();
 	walls[3 - 1]->transform = rotate(translate(point3(size.x * 0.5f, 0, 0)), glm::radians(90.0f),
 	                                 vec3{0.0f, 1.0f, 0.0f});
-	walls[3 - 1]->width = size.z;
-	walls[3 - 1]->height = size.y;
+	walls[3 - 1]->size = vec2(size.z, size.y);
 	walls[3 - 1]->update();
 	walls[3 - 1]->material = &cornell_red;
 
 	walls[4 - 1]->transform = rotate(translate(point3(0, size.y * 0.5f, 0)), glm::radians(-90.0f),
 	                                 vec3{1.0f, 0.0f, 0.0f});
-	walls[4 - 1]->width = size.z;
-	walls[4 - 1]->height = size.x;
+	walls[4 - 1]->size = vec2(size.z, size.x);
 	walls[4 - 1]->material = &cornell_white;
 	walls[4 - 1]->update();
 	walls[5 - 1]->transform = rotate(translate(point3(0, -size.y * 0.5f, 0)), glm::radians(90.0f),
 	                                 vec3{1.0f, 0.0f, 0.0f});
-	walls[5 - 1]->width = size.z;
-	walls[5 - 1]->height = size.x;
+	walls[5 - 1]->size = vec2(size.z, size.x);
 	walls[5 - 1]->material = &cornell_white;
 	walls[5 - 1]->update();
 
 	auto& light = world.add<rectangle>("light");
 	light.transform = set_position_and_rotation(vec3(0, size.y * 0.45f, 0), 90.0f, vector3::right());
-	light.height = light.width = 0.447f;
+	light.size = vec2(0.447f);
 	light.material = &light_material;
 	light.update();
 
@@ -201,12 +199,12 @@ camera make_simple_scene(world& world, object_store<material>& materials)
 
 camera make_box_scene(world& world, object_store<material>& materials)
 {
-	world.add<rectangle>("1");
-	world.add<rectangle>("2");
-	world.add<rectangle>("3");
-	world.add<rectangle>("4");
+	//world.add<rectangle>("1");
+	//world.add<rectangle>("2");
+	//world.add<rectangle>("3");
+	//world.add<rectangle>("4");
 
-	//world.add<box>("box");
+	world.add<box>("box");
 
 	auto& light_material = materials.add<lambertian_material>("Light", *solid_color::white());
 	light_material.emission = solid_color::white();
@@ -228,7 +226,7 @@ int main()
 	world world;
 
 	object_store<material> materials = material_store();
-
+	
 	camera camera = [&]()
 	{
 		switch (1)
@@ -267,8 +265,8 @@ int main()
 
 	selection_overlay selection_overlay{raytrace_renderer.current_render};
 
-	void* selection = nullptr;
-	void* material_selection = nullptr;
+	serializable* selection = nullptr;
+	serializable* material_selection = nullptr;
 	gui_image render_image{false};
 
 	long long last_render_duration = 0;
@@ -287,7 +285,7 @@ int main()
 
 		bool scene_changed = false;
 		if (ImGui::Begin("Render"))
-		{
+		{			
 			auto target_iteration = static_cast<int>(raytrace_renderer.current_render.target_iteration);
 			ImGui::Text("Render: %d / %d (avg: %llums)",
 			            static_cast<int>(raytrace_renderer.current_render.iteration),
@@ -310,7 +308,7 @@ int main()
 			}
 
 			scene_changed |= ImGui::DragInt("Max depth", &raytrace_renderer.current_render.settings.bounce_depth);
-			scene_changed |= gui::draw_double("Ambiant strength",
+			scene_changed |= gui::draw_float("Ambiant strength",
 			                                  raytrace_renderer.current_render.settings.background_strength);
 			scene_changed |= gui::draw_color("Background top",
 			                                 raytrace_renderer.current_render.settings.background_top_color);
@@ -363,7 +361,7 @@ int main()
 			}
 			else if (selection != nullptr && selection != &camera)
 			{
-				mat = *get_selection_material(selection);
+				mat = static_cast<::hittable*>(selection)->material;
 			}
 
 			if (mat != nullptr)
@@ -377,11 +375,12 @@ int main()
 					ImGui::SameLine();
 					if (ImGui::Button("Assign to selection"))
 					{
-						*get_selection_material(selection) = static_cast<material*>(material_selection);
+						static_cast<::hittable*>(selection)->material = static_cast<material*>(material_selection);
 						scene_changed = true;
 					}
 				}
-				scene_changed |= draw_material_inspector(mat);
+
+				scene_changed |= inspector.serialize_root(mat->serialize().get());
 			}
 		}
 		ImGui::End();
@@ -442,7 +441,7 @@ int main()
 
 		gui::end_frame();
 
-		if (is_rendering && render_prev_iteration != raytrace_renderer.current_render.iteration)
+		if (is_rendering && render_prev_iteration != raytrace_renderer.current_render.iteration && raytrace_renderer.current_render.iteration > 1.0f)
 		{
 			if (scene_changed)
 			{

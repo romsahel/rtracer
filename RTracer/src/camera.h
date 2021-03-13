@@ -1,12 +1,14 @@
 ﻿#pragma once
 
+#include "serializable.h"
+#include "serializable_node.h"
 #include "core/vec3.h"
 #include "core/direction3.h"
 #include "core/point3.h"
 #include "core/vec3_utility.h"
 #include "core/ray.h"
 
-class camera
+class camera : public serializable
 {
 public:
 	camera(float aspect_ratio)
@@ -46,6 +48,20 @@ public:
 		m_horizontal = focus_distance * m_viewport_width * m_u;
 		m_vertical = focus_distance * m_viewport_height * m_v;
 		m_lower_left_corner = point3(origin - m_horizontal * 0.5f - m_vertical * 0.5f - focus_distance * m_w);
+	}
+
+
+	std::shared_ptr<serializable_node_base> serialize() override
+	{
+		return std::make_shared<serializable_node_base>(
+			"Camera", serializable_list{
+				std::make_shared<serializable_node<point3>>("Origin", &origin),
+				std::make_shared<serializable_node<point3>>("Target", &target),
+				std::make_shared<serializable_node<float>>("Vertical FoV", &vertical_fov),
+				std::make_shared<serializable_node<float>>("Aperture", &aperture),
+				std::make_shared<serializable_node<float>>("Focus distance", &focus_distance),
+			}
+		);
 	}
 
 	point3 origin = point3(vector3::backward() * 2.0f);

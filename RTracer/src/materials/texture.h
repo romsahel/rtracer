@@ -3,7 +3,7 @@
 #include "core/color.h"
 #include "core/point3.h"
 
-class texture
+class texture : public serializable
 {
 public:
 	virtual color value_at(const vec2& uv_coordinates, const point3& p) const = 0;
@@ -43,6 +43,11 @@ public:
 		static solid_color instance{color::white()};
 		return &instance;
 	}
+
+	std::shared_ptr<serializable_node_base> serialize() override
+	{
+		return std::make_shared<serializable_node<color>>("Color", &color_value);
+	}
 };
 
 class checker_texture : public texture
@@ -67,6 +72,16 @@ public:
 			return odd->value_at(uv_coordinates, p);
 		else
 			return even->value_at(uv_coordinates, p);
+	}
+
+	std::shared_ptr<serializable_node_base> serialize() override
+	{
+		return std::make_shared<serializable_node_base>(
+			"Checker texture", serializable_list{
+				odd->serialize(),
+				even->serialize()
+			}
+		);
 	}
 
 	texture* odd;

@@ -63,6 +63,15 @@ namespace gui
 		return changed;
 	}
 
+	bool draw_vec2(const char* label, vec2& value, float speed = 0.1f)
+	{
+		ImGui::PushID(&value);
+		const bool changed = ImGui::DragFloat3(label, glm::value_ptr(value), speed);
+		ImGui::PopID();
+
+		return changed;
+	}
+
 	bool draw_color(const char* label, color& value)
 	{
 		ImGui::PushID(&value);
@@ -75,7 +84,7 @@ namespace gui
 		return changed;
 	}
 
-	bool draw_double(const char* label, float& value, float speed = 0.1f, float v_min = 0.0f, float v_max = 0.0f)
+	bool draw_float(const char* label, float& value, float speed = 0.1f, float v_min = 0.0f, float v_max = 0.0f)
 	{
 		auto tmp = static_cast<float>(value);
 		ImGui::PushID(&value);
@@ -84,26 +93,6 @@ namespace gui
 
 		if (changed)
 			value = static_cast<float>(tmp);
-		return changed;
-	}
-
-	bool draw_doubles(const char* label, float& value1, float& value2, float speed = 0.1f, float v_min = 0.0f,
-	                  float v_max = 0.0f)
-	{
-		static float values[3];
-		values[0] = static_cast<float>(value1);
-		values[1] = static_cast<float>(value2);
-
-		ImGui::PushID(&value1);
-		const bool changed = ImGui::DragFloat2(label, values, speed, v_min, v_max);
-		ImGui::PopID();
-
-		if (changed)
-		{
-			value1 = static_cast<float>(values[0]);
-			value2 = static_cast<float>(values[1]);
-		}
-
 		return changed;
 	}
 

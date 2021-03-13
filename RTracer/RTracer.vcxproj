@@ -193,6 +193,7 @@
     <ClInclude Include="src\gui\gui_base_inspectors.h" />
     <ClInclude Include="src\gui\gui_initializer.h" />
     <ClInclude Include="src\gui\gui_utils.h" />
+    <ClInclude Include="src\inspector_serializer.h" />
     <ClInclude Include="src\materials\dieletric_material.h" />
     <ClInclude Include="src\materials\image_texture.h" />
     <ClInclude Include="src\materials\lambertian_material.h" />
@@ -207,7 +208,9 @@
     <ClInclude Include="src\materials\texture.h" />
     <ClInclude Include="src\raytrace_renderer.h" />
     <ClInclude Include="src\gui\selection_overlay.h" />
+    <ClInclude Include="src\serializable.h" />
     <ClInclude Include="src\serializable_node.h" />
+    <ClInclude Include="src\thread_pool.h" />
     <ClInclude Include="src\world.h" />
   </ItemGroup>
   <ItemGroup>

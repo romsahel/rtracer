@@ -51,8 +51,18 @@ public:
 
 	static dielectric_material& default_material()
 	{
-		static dielectric_material value{"default dielectric", 1.0f};
+		static dielectric_material value{"Default Dielectric", 1.0f};
 		return value;
+	}
+
+	std::shared_ptr<serializable_node_base> serialize() override
+	{
+		return std::make_shared<serializable_node_base>(
+			name, serializable_list{
+				std::make_shared<serializable_node<float>>("IOR", &m_index_of_refraction),
+				material::serialize()
+			}
+		);
 	}
 
 private:

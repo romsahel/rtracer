@@ -31,7 +31,18 @@ public:
 
 	static metal_material& default_material()
 	{
-		static metal_material value{"default_metal", color::gray(), 0.0f};
+		static metal_material value{"Default Metal", color::gray(), 0.0f};
 		return value;
+	}
+
+	std::shared_ptr<serializable_node_base> serialize() override
+	{
+		return std::make_shared<serializable_node_base>(
+			name, serializable_list{
+				std::make_shared<serializable_node<color>>("Albedo", &albedo),
+				std::make_shared<serializable_node<float>>("Roughness", &roughness),
+				material::serialize()
+			}
+		);
 	}
 };

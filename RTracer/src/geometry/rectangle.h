@@ -8,7 +8,7 @@ class rectangle : public hittable
 public:
 	explicit rectangle(const char* name = "", point3 position = point3(vector3::zero()), float width = 1.0f,
 	                   float height = 1.0f)
-		: hittable(name), width(width), height(height)
+		: hittable(name), size(width, height)
 	{
 		transform = translate(transform, position);
 		inv_transform = inverse(transform);
@@ -18,7 +18,7 @@ public:
 	{
 		inv_transform = inverse(transform);
 
-		const vec3 offset{width * 0.5f, height * 0.5f, constants::epsilon};
+		const vec3 offset{size.x * 0.5f, size.y * 0.5f, constants::epsilon};
 		bbox = aabb(point3(-offset), point3(offset));
 		bbox.transform(transform);
 	}
@@ -29,7 +29,7 @@ public:
 		bool is_hit = t >= t_min && t <= t_max;
 		if (is_hit)
 		{
-			const vec2 offset{width * 0.5f, height * 0.5f};
+			const vec2 offset{size.x * 0.5f, size.y * 0.5f};
 			const vec2 hitpoint = ray.origin + t * ray.direction;
 			is_hit = all(greaterThan(hitpoint, -offset)) && all(lessThan(hitpoint, offset));
 			if (is_hit)
@@ -47,6 +47,12 @@ public:
 		return is_hit;
 	}
 
-	float width;
-	float height;
+	std::shared_ptr<serializable_node_base> serialize() override
+	{
+		auto node = hittable::serialize();
+		node->children.push_back(std::make_shared<serializable_node<vec2>>("Size", &size));
+		return node;
+	}
+
+	vec2 size;
 };

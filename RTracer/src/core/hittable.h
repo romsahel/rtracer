@@ -7,6 +7,8 @@
 #include "direction3.h"
 #include "point3.h"
 #include "ray.h"
+#include "serializable.h"
+#include "serializable_node.h"
 #include "vec3_utility.h"
 #include "materials/material.h"
 
@@ -49,7 +51,7 @@ struct hit_info
 /// <summary>
 /// represents objects that can be hit by light (e.g. geometry)
 /// </summary>
-class hittable
+class hittable : public serializable
 {
 public:
 	explicit hittable(const char* name);
@@ -84,6 +86,15 @@ public:
 
 	virtual void update()
 	{
+	}
+
+	std::shared_ptr<serializable_node_base> serialize() override
+	{
+		return std::make_shared<serializable_node_base>(
+			name, serializable_list{
+				std::make_shared<serializable_transform>(transform)
+			}
+		);
 	}
 
 	// name is used for ui and debug purposes
