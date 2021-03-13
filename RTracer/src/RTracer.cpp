@@ -441,7 +441,7 @@ int main()
 
 		gui::end_frame();
 
-		if (is_rendering && render_prev_iteration != raytrace_renderer.current_render.iteration && raytrace_renderer.current_render.iteration > 1.0f)
+		if (is_rendering && render_prev_iteration != raytrace_renderer.current_render.iteration)
 		{
 			if (scene_changed)
 			{
@@ -454,13 +454,16 @@ int main()
 			last_render_duration = raytrace_renderer.current_render.last_render_duration;
 			render_prev_iteration = raytrace_renderer.current_render.iteration;
 
-			total_render_duration += last_render_duration;
-			min_render_duration = std::min(min_render_duration, last_render_duration);
-			max_render_duration = std::max(max_render_duration, last_render_duration);
-			//average_render_time = static_cast<long long>((min_render_time + max_render_time) * 0.5f);
-			average_render_time = static_cast<long long>(
-				static_cast<float>(total_render_duration) / (raytrace_renderer.current_render.iteration - 1.0f)
-			);
+			if (raytrace_renderer.current_render.iteration > 2.0f)
+			{
+				total_render_duration += last_render_duration;
+				min_render_duration = std::min(min_render_duration, last_render_duration);
+				max_render_duration = std::max(max_render_duration, last_render_duration);
+				//average_render_time = static_cast<long long>((min_render_time + max_render_time) * 0.5f);
+				average_render_time = static_cast<long long>(
+					static_cast<float>(total_render_duration) / (raytrace_renderer.current_render.iteration - 2.0f)
+				);
+			}
 		}
 
 		if (has_selection)
