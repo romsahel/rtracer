@@ -44,6 +44,15 @@ inline bool is_near_zero(const vec_t& v)
 	return length2(v) < constants::epsilon * constants::epsilon;
 }
 
+inline auto multiply_point_fast(const glm::mat4& m, const glm::vec3& v)
+{
+	return vec3{
+		(m[0][0] * v.x + m[1][0] * v.y + m[2][0] * v.z) + m[3][0],
+		(m[0][1] * v.x + m[1][1] * v.y + m[2][1] * v.z) + m[3][1],
+		(m[0][2] * v.x + m[1][2] * v.y + m[2][2] * v.z) + m[3][2]
+	};
+}
+
 namespace vector3
 {
 	// return a random vec3 contained in a sphere placed at the origin and of a radius of 1

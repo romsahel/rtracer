@@ -184,6 +184,7 @@
     <ClInclude Include="src\core\color.h" />
     <ClInclude Include="src\core\hittable.h" />
     <ClInclude Include="src\core\gl_includer.h" />
+    <ClInclude Include="src\core\hit_info.h" />
     <ClInclude Include="src\geometry\box.h" />
     <ClInclude Include="src\geometry\rectangle.h" />
     <ClInclude Include="src\gui\gui_base_inspectors.h" />

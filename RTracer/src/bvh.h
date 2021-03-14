@@ -62,13 +62,18 @@ public:
 			else
 			{
 				// put half in each subtree
-				size_t half = start + count / 2;
+				const size_t half = start + count / 2;
 				left = new bvh_node(objects, start, half);
 				right = new bvh_node(objects, half, end);
 			}
 		}
 
 		bbox = aabb::surrounding(left->bbox, right->bbox);
+	}
+
+	void internal_update() override
+	{
+		
 	}
 
 	bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info) override

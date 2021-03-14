@@ -11,10 +11,8 @@ public:
 	{
 	}
 	
-	void update() override
+	void internal_update() override
 	{
-		inv_transform = inverse(transform);
-
 		// front
 		m_sides[0].transform = translate(point3(0, 0, size.z * 0.5f));
 		m_sides[0].size = vec2(size.x, size.y);
@@ -47,7 +45,6 @@ public:
 
 		const auto extent = vec3(size * 0.5f);
 		bbox = aabb(point3(-extent), point3(extent));
-		bbox.transform(transform);
 	}
 
 	bool hit(const ray& ray, float t_min, float /*t_max*/, hit_info& info) override

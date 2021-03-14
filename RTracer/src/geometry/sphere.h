@@ -2,8 +2,6 @@
 
 #include "core/aabb.h"
 #include "core/hittable.h"
-#include <math.h>       /* isnan, sqrt */
-bool use_transform = false;
 
 /// <summary>
 /// represent a sphere
@@ -19,15 +17,11 @@ public:
 		inv_transform = inverse(transform);
 	}
 
-	void update() override
+	void internal_update() override
 	{
-		inv_transform = inverse(transform);
-
 		const vec3 size(radius);
 		bbox = aabb(point3(-size), point3(size));
-		bbox.transform(transform);
 	}
-
 
 	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override
 	{

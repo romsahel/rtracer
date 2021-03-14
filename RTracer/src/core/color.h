@@ -1,8 +1,5 @@
 #pragma once
 
-#include <ostream>
-
-#include "utility.h"
 #include "vec3.h"
 
 struct color : vec3
@@ -11,7 +8,7 @@ struct color : vec3
 	{
 	}
 
-	color(float x, float y, float z) : vec3(x, y, z)
+	color(float in_x, float in_y, float in_z) : vec3(in_x, in_y, in_z)
 	{
 	}
 
@@ -29,18 +26,3 @@ struct color : vec3
 	static color magenta() { return color(1, 0, 1); }
 	static color gray() { return color(0.5f, 0.5f, 0.5f); }
 };
-
-inline vec3 to_writable_color(vec3 rgb, float inv_samples_per_pixel)
-{
-	return sqrt((inv_samples_per_pixel * rgb)) * 255.0f;
-}
-
-__forceinline unsigned char to_writable_color(float rgb)
-{
-	return static_cast<unsigned char>(clamp(rgb, 0.0f, 255.0f));
-}
-
-inline unsigned char to_writable_color(float rgb, float inv_samples_per_pixel)
-{
-	return static_cast<unsigned char>((clamp(255.0f * sqrt(inv_samples_per_pixel * rgb), 0.0f, 255.0f)));
-}

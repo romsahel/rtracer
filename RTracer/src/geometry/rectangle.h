@@ -14,13 +14,10 @@ public:
 		inv_transform = inverse(transform);
 	}
 
-	void update() override
+	void internal_update() override
 	{
-		inv_transform = inverse(transform);
-
 		const vec3 offset{size.x * 0.5f, size.y * 0.5f, constants::epsilon};
 		bbox = aabb(point3(-offset), point3(offset));
-		bbox.transform(transform);
 	}
 
 	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override

@@ -4,63 +4,21 @@
 
 #include "vec3.h"
 #include "aabb.h"
+#include "hit_info.h"
 #include "ray.h"
 #include "serializable.h"
 #include "serializable_node.h"
-#include "materials/material.h"
-
-class hittable;
-
-/// <summary>
-/// contains information of how the light hits an hittable object
-/// </summary>
-struct hit_info
-{
-	// point in world space where the hit occurred
-	point3 point = point3(0.0f);
-	// direction for the bouncing ray
-	direction3 normal = direction3(0.0f);
-	// distance from the origin of the raycast to the hit point
-	float distance = constants::infinity;
-	// true if the raycast hit the object from its frontside ; false if it hit from the backside
-	bool front_face = false;
-
-	// material of the hit object
-	material* material = nullptr;
-	// uv coordinate of the material at the hitpoint
-	vec2 uv_coordinates = vec2(0.0f);
-
-	hittable* object = nullptr;
-
-	explicit hit_info(::material* material)
-		: material(material)
-	{
-	}
-
-	// set both front_face and normal property using the raycast and the outward normal to compute
-	inline void set_face_normal(const direction3& ray_direction, const direction3& outward_normal)
-	{
-		front_face = dot(ray_direction, outward_normal) < 0;
-		normal = (static_cast<float>(front_face) * 2.0f - 1.0f) * outward_normal;
-	}
-};
 
 /// <summary>
 /// represents objects that can be hit by light (e.g. geometry)
 /// </summary>
 class hittable : public serializable
 {
+protected:
+	virtual void internal_update() = 0;
+	
 public:
 	explicit hittable(const char* name);
-
-	static auto multiply_point_fast(const glm::mat4& m, const glm::vec3& v)
-	{
-		return vec3{
-			(m[0][0] * v.x + m[1][0] * v.y + m[2][0] * v.z) + m[3][0],
-			(m[0][1] * v.x + m[1][1] * v.y + m[2][1] * v.z) + m[3][1],
-			(m[0][2] * v.x + m[1][2] * v.y + m[2][2] * v.z) + m[3][2]
-		};
-	}
 
 	virtual bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info)
 	{
@@ -78,9 +36,12 @@ public:
 	}
 
 	virtual bool hit(const ray& ray, float t_min, float t_max, hit_info& info) = 0;
-
-	virtual void update()
+	
+	void update()
 	{
+		inv_transform = inverse(transform);
+		internal_update();
+		bbox.transform(transform);
 	}
 
 	std::shared_ptr<serializable_node_base> serialize() override

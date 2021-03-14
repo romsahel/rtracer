@@ -142,7 +142,7 @@ struct raytrace_render_thread
 		{
 			std::shared_ptr<raytrace_render_command> cmd = commands.front();
 			commands.pop_front();
-			if (!render(cmd->camera, cmd->world, cmd->data, settings))
+			if (!render(cmd->camera, cmd->world, cmd->data, settings) && is_alive)
 			{
 				commands.push_back(cmd);
 			}
@@ -153,6 +153,16 @@ struct raytrace_render_thread
 	void pause()
 	{
 		is_alive = false;
+	}
+
+	void pause_synchronous()
+	{
+		if (is_alive)
+		{
+			pause();
+			pool.wait();
+			thread.join();
+		}
 	}
 
 	void resume()
@@ -182,7 +192,7 @@ struct raytrace_render_thread
 	static bool render(const camera& camera, world& world, raytrace_render_data& data,
 	                   const raytrace_settings& raytrace_settings)
 	{
-		auto start = std::chrono::high_resolution_clock::now();
+		auto chrono_start = std::chrono::high_resolution_clock::now();
 
 		constexpr int it_by_frame = 1;
 		
@@ -213,7 +223,7 @@ struct raytrace_render_thread
 				}
 
 				// convert pixels[j].color into image-readable ascii pixel_colors
-				vec3 c = to_writable_color(pixels[j].color, inv_samples_per_pixel);
+				vec3 c = sqrt(inv_samples_per_pixel * pixels[j].color) * 255.0f;
 				for (int i = 0; i < 3; i++)
 					pixel_colors[pixels[j].index + static_cast<long>(i)] = static_cast<unsigned char>(clamp(c[i], 0.0f, 255.0f));
 			}
@@ -226,8 +236,8 @@ struct raytrace_render_thread
 
 		data.iteration += static_cast<float>(it_by_frame) / 3.0f;
 
-		const auto stop = std::chrono::high_resolution_clock::now();
-		const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+		const auto chrono_stop = std::chrono::high_resolution_clock::now();
+		const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(chrono_stop - chrono_start);
 		data.last_render_duration = duration.count();
 
 		return data.iteration >= data.target_iteration;
