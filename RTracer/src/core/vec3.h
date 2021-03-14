@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include <cmath>
 #include <emmintrin.h>
 
@@ -22,6 +24,25 @@
 using vec2 = glm::vec2;
 using vec3 = glm::vec3;
 using vec4 = glm::vec4;
+using direction3 = vec3;
+using point3 = vec3;
+
+inline std::ostream& operator<<(std::ostream& out, const vec3& v)
+{
+	return out << v.x << ' ' << v.y << ' ' << v.z;
+}
+
+template <typename vec_t>
+inline float sum(const vec_t& v)
+{
+	return glm::compAdd(v);
+}
+
+template <typename vec_t>
+inline bool is_near_zero(const vec_t& v)
+{
+	return length2(v) < constants::epsilon * constants::epsilon;
+}
 
 namespace vector3
 {

@@ -10,12 +10,12 @@ public:
 	thread_pool(unsigned int num_threads)
 	{
 		init_mutex.lock();
-		for (int i = 0; i < num_threads; i++)
+		for (unsigned int i = 0; i < num_threads; i++)
 		{
-			threads.push_back(std::move(std::thread([this]()
+			threads.emplace_back([this]()
 			{
 				thread_func();
-			})));
+			});
 		}
 		init_mutex.unlock();
 	}
@@ -39,11 +39,11 @@ public:
 	}
 
 	template <typename Fn, typename... Args>
-	auto async(Fn f, Args ... args)
+	auto async(Fn f, Args ... fargs)
 	{
-		using return_t = decltype(f(args...));
+		using return_t = decltype(f(fargs...));
 		auto* p = new std::promise<return_t>();
-
+		
 		auto task_wrapper = std::bind([p, f{std::move(f)}](Args... args)
 		{
 			if constexpr (std::is_same<return_t, void>::value)
@@ -55,7 +55,7 @@ public:
 			{
 				p->set_value(std::move(f(std::move(args)...)));
 			}
-		}, std::move(args)...);
+		}, std::move(fargs)...);
 
 		auto return_wrapper = [p]()
 		{
@@ -78,7 +78,7 @@ public:
 		return std::move(return_wrapper);
 	}
 
-	void wait()
+	void wait() const
 	{
 		while (!tasks.empty())
 			std::this_thread::yield();

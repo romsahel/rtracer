@@ -1,7 +1,5 @@
 ﻿#pragma once
 
-#include "direction3.h"
-#include "point3.h"
 #include "ray.h"
 
 class aabb

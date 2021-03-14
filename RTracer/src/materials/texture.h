@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "object_store.h"
 #include "core/color.h"
-#include "core/point3.h"
 
 class texture : public serializable
 {

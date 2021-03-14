@@ -1,9 +1,7 @@
 ﻿#pragma once
 #include "camera.h"
-#include "gui_image.h"
 #include "gui_utils.h"
 #include "world.h"
-#include "core/rotate_y.h"
 #include "materials/image_texture.h"
 #include "inspector_serializer.h"
 

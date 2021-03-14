@@ -182,11 +182,7 @@
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\core\aabb.h" />
     <ClInclude Include="src\core\color.h" />
-    <ClInclude Include="src\core\direction3.h" />
     <ClInclude Include="src\core\hittable.h" />
-    <ClInclude Include="src\core\point3.h" />
-    <ClInclude Include="src\core\rotate_y.h" />
-    <ClInclude Include="src\core\vec3_utility.h" />
     <ClInclude Include="src\core\gl_includer.h" />
     <ClInclude Include="src\geometry\box.h" />
     <ClInclude Include="src\geometry\rectangle.h" />

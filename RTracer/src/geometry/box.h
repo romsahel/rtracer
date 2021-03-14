@@ -50,7 +50,7 @@ public:
 		bbox.transform(transform);
 	}
 
-	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override
+	bool hit(const ray& ray, float t_min, float /*t_max*/, hit_info& info) override
 	{
 		bool is_hit = false;
 		for (int i = 0; i < 6; ++i)

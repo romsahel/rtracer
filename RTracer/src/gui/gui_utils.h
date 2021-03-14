@@ -1,9 +1,8 @@
 ﻿#pragma once
 
+#include "core/vec3.h"
 #include "gui_initializer.h"
 #include "core/color.h"
-#include "core/point3.h"
-#include "core/vec3.h"
 
 namespace gui
 {

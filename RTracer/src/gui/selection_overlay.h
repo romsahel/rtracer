@@ -58,7 +58,7 @@ public:
 		renderer.render(camera, m_world, m_render);
 
 		m_image.update(renderer.settings.image_width, renderer.settings.image_height,
-		               m_render.front_buffer().data());
+		               m_render.front_buffer.data());
 
 		hittable_selection->material = saved_material;
 		m_world.shallow_clear();

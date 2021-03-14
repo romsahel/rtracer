@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "serializable_node.h"
+#include "gui/gui_image.h"
 #include "gui/gui_utils.h"
 
 class inspector_serializer : public serializer

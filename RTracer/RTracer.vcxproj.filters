@@ -51,15 +51,6 @@
     <ClInclude Include="src\materials\dieletric_material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\point3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\direction3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\vec3_utility.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\raytrace_renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -97,9 +88,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="external\stb_image.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\core\rotate_y.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\geometry\rectangle.h">

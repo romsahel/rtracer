@@ -3,9 +3,6 @@
 #include "serializable.h"
 #include "serializable_node.h"
 #include "core/vec3.h"
-#include "core/direction3.h"
-#include "core/point3.h"
-#include "core/vec3_utility.h"
 #include "core/ray.h"
 
 class camera : public serializable
@@ -48,8 +45,18 @@ public:
 		m_horizontal = focus_distance * m_viewport_width * m_u;
 		m_vertical = focus_distance * m_viewport_height * m_v;
 		m_lower_left_corner = point3(origin - m_horizontal * 0.5f - m_vertical * 0.5f - focus_distance * m_w);
+
+		m_has_changed = true;
 	}
 
+	bool m_has_changed;
+
+	bool has_changed()
+	{
+		bool flag = m_has_changed;
+		m_has_changed = false;
+		return flag;
+	}
 
 	std::shared_ptr<serializable_node_base> serialize() override
 	{

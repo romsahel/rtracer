@@ -1,5 +1,4 @@
 ﻿#include "vec3.h"
-#include "vec3_utility.h"
 
 template <int N>
 struct static_cbrt

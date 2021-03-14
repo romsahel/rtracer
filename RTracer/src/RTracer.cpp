@@ -8,8 +8,6 @@
 #include "stb_image_write.h"
 #include "stb_image.h"
 
-#include "core/direction3.h"
-#include "core/point3.h"
 #include "core/color.h"
 
 #include "materials/lambertian_material.h"
@@ -26,7 +24,6 @@
 
 #include "raytrace_renderer.h"
 #include "world.h"
-#include "core/rotate_y.h"
 #include "geometry/box.h"
 
 #include "materials/dieletric_material.h"
@@ -389,6 +386,11 @@ int main()
 		if (scene_changed)
 		{
 			raytrace_renderer.signal_scene_change();
+			//if (camera.has_changed())
+			//{
+			//	raytrace_renderer.clean_frontbuffer();
+			//}
+
 			raytrace_renderer.render(camera, world);
 			selection_overlay.signal_change();
 			world.signal_scene_change();
@@ -450,7 +452,7 @@ int main()
 				max_render_duration = 0;
 			}
 
-			render_image.update(image_width, image_height, raytrace_renderer.current_render.front_buffer().data());
+			render_image.update(image_width, image_height, raytrace_renderer.current_render.front_buffer.data());
 			last_render_duration = raytrace_renderer.current_render.last_render_duration;
 			render_prev_iteration = raytrace_renderer.current_render.iteration;
 

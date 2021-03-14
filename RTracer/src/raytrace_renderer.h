@@ -70,49 +70,19 @@ struct raytrace_render_data
 	float target_iteration = 1000.0f;
 
 	raytrace_render_settings settings;
-	long long last_render_duration;
-
-	raytrace_render_data() = default;
-
-	raytrace_render_data(const raytrace_render_data& other)
-		: pixels(other.pixels),
-		  iteration(other.iteration),
-		  target_iteration(other.target_iteration),
-		  settings(other.settings),
-		  last_render_duration(other.last_render_duration),
-		  colors_front(other.colors_front),
-		  colors_back(other.colors_back)
-	{
-	}
+	long long last_render_duration = 0;
 
 	void set_pixels_from(const raytrace_render_data& src)
 	{
 		std::memcpy(pixels.data(), src.pixels.data(), pixels.size() * sizeof(raytrace_pixel));
 	}
 
-	void swap_buffers()
+	void set_buffer_from(const raytrace_render_data& src)
 	{
-		//std::lock_guard<std::mutex> guard(m_mutex);
-		std::swap(colors_front, colors_back);
+		std::memcpy(front_buffer.data(), src.front_buffer.data(), front_buffer.size() * sizeof(unsigned char));
 	}
 
-	auto& front_buffer()
-	{
-		//std::lock_guard<std::mutex> guard(m_mutex);
-		return colors_front;
-	}
-
-	auto& back_buffer()
-	{
-		//std::lock_guard<std::mutex> guard(m_mutex);
-		return colors_back;
-	}
-
-
-private:
-	//std::mutex m_mutex;
-	std::vector<unsigned char> colors_front;
-	std::vector<unsigned char> colors_back;
+	std::vector<unsigned char> front_buffer;
 };
 
 struct raytrace_render_command
@@ -214,23 +184,23 @@ struct raytrace_render_thread
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 
-		const int it_by_frame = 1;
+		constexpr int it_by_frame = 1;
 		
 		// render settings
 		const float inv_samples_per_pixel = 1.0f / static_cast<float>(static_cast<int>(data.iteration) + it_by_frame - 1);
 		const raytrace_render_settings render_settings = data.settings;
-		std::vector<unsigned char>& pixel_colors = data.front_buffer();
+		std::vector<unsigned char>& pixel_colors = data.front_buffer;
 
 		const size_t pixel_count = data.pixels.size();
 		const int offset = static_cast<int>(data.iteration) % 3;
-		const int nb = pixel_count / thread_count;
+		const size_t nb = pixel_count / thread_count;
 		auto f = [&pixel_colors, &world, &camera, render_settings,
 				inv_samples_per_pixel,
 				inv_width{raytrace_settings.inv_image_width}, inv_height{raytrace_settings.inv_image_height},
 				it_by_frame, &pixels{data.pixels}]
-		(int start, int end)
+		(size_t start, size_t end)
 		{
-			for (int j = start; j < end; j += 3)
+			for (size_t j = start; j < end; j += 3)
 			{
 				for (int i = 0; i < it_by_frame; i++)
 				{
@@ -245,12 +215,12 @@ struct raytrace_render_thread
 				// convert pixels[j].color into image-readable ascii pixel_colors
 				vec3 c = to_writable_color(pixels[j].color, inv_samples_per_pixel);
 				for (int i = 0; i < 3; i++)
-					pixel_colors[pixels[j].index + i] = static_cast<unsigned char>(clamp(c[i], 0.0f, 255.0f));
+					pixel_colors[pixels[j].index + static_cast<long>(i)] = static_cast<unsigned char>(clamp(c[i], 0.0f, 255.0f));
 			}
 		};
 		for (size_t i = 0; i < thread_count; i++)
 		{
-			pool.async(f, i * nb + offset, std::min((i + 1) * nb + offset, pixel_count));
+			pool.async(f, static_cast<size_t>(i * nb + offset), std::min((i + 1) * nb + offset, pixel_count));
 		}
 		pool.wait();
 
@@ -277,7 +247,7 @@ struct raytrace_render_thread
 			if (!world.hit(raycast, 0.001f, constants::infinity, hit))
 			{
 				const float t = 0.5f * (raycast.direction.y + 1.0f);
-				return color(acc_emitted + mul(acc_attenuation,
+				return color(acc_emitted + (acc_attenuation *
 				                               color(((1.0f - t) * settings.background_bottom_color + t * settings.
 					                               background_top_color) * settings.background_strength)));
 			}
@@ -288,17 +258,17 @@ struct raytrace_render_thread
 			if (hit.material->scatter(raycast, hit, attenuation, scattered))
 			{
 				raycast = scattered;
-				acc_attenuation = color(mul(acc_attenuation, attenuation));
-				acc_emitted = color(acc_emitted + mul(acc_attenuation, emitted));
+				acc_attenuation = color(acc_attenuation * attenuation);
+				acc_emitted = color(acc_emitted + (acc_attenuation * emitted));
 				depth = depth - 1;
 				if (depth < 1)
 				{
-					return color(acc_emitted + mul(acc_attenuation, settings.bounce_depth_limit_color));
+					return color(acc_emitted + (acc_attenuation * settings.bounce_depth_limit_color));
 				}
 				continue;
 			}
 
-			return color(acc_emitted + mul(acc_attenuation, emitted));
+			return color(acc_emitted + (acc_attenuation * emitted));
 		}
 	}
 };
@@ -315,21 +285,19 @@ public:
 		current_render.pixels.reserve(pixel_count);
 		empty_render.pixels.reserve(pixel_count);
 
-		current_render.back_buffer().reserve(pixel_count * channels_num);
-		current_render.front_buffer().reserve(pixel_count * channels_num);
+		current_render.front_buffer.reserve(pixel_count * channels_num);
 
 		int index = 0;
-		for (float y = static_cast<float>(image_height - 1); y >= 0; --y)
+		for (auto y = static_cast<float>(image_height - 1); y >= 0; y -= 1.0f)
 		{
-			for (float x = 0; x < static_cast<float>(image_width); ++x)
+			for (float x = 0.0f; x < static_cast<float>(image_width); x += 1.0f)
 			{
 				current_render.pixels.emplace_back(index, x, y);
 				empty_render.pixels.emplace_back(index, x, y);
 				for (int i = 0; i < channels_num; ++i)
 				{
-					current_render.back_buffer().emplace_back();
-					current_render.front_buffer().emplace_back();
-					empty_render.front_buffer().emplace_back();
+					current_render.front_buffer.emplace_back();
+					empty_render.front_buffer.emplace_back();
 					index++;
 				}
 			}
@@ -340,7 +308,7 @@ public:
 	{
 		stbi_write_jpg(filename.c_str(),
 		               settings.image_width, settings.image_height, channels_num,
-		               current_render.front_buffer().data(),
+		               current_render.front_buffer.data(),
 		               settings.image_width * channels_num);
 	}
 
@@ -351,6 +319,11 @@ public:
 	{
 		current_render.set_pixels_from(empty_render);
 		current_render.iteration = 1.0f;
+	}
+
+	void clean_frontbuffer()
+	{
+		current_render.set_buffer_from(empty_render);
 	}
 
 	/// <summary>

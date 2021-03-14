@@ -2,14 +2,11 @@
 
 #include <glm/gtx/matrix_decompose.hpp>
 
-
+#include "vec3.h"
 #include "aabb.h"
-#include "direction3.h"
-#include "point3.h"
 #include "ray.h"
 #include "serializable.h"
 #include "serializable_node.h"
-#include "vec3_utility.h"
 #include "materials/material.h"
 
 class hittable;
@@ -55,9 +52,8 @@ class hittable : public serializable
 {
 public:
 	explicit hittable(const char* name);
-	virtual ~hittable() = default;
 
-	__forceinline vec3 multiply_point_fast(const glm::mat4& m, const glm::vec3& v)
+	static auto multiply_point_fast(const glm::mat4& m, const glm::vec3& v)
 	{
 		return vec3{
 			(m[0][0] * v.x + m[1][0] * v.y + m[2][0] * v.z) + m[3][0],
@@ -68,10 +64,9 @@ public:
 
 	virtual bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info)
 	{
-		const auto transformed_ray = ::ray(
-			multiply_point_fast(inv_transform, base_ray.origin),
-			glm::mat3(inv_transform) * base_ray.direction
-		);
+		const auto origin = multiply_point_fast(inv_transform, base_ray.origin);
+		const auto direction = glm::mat3(inv_transform) * base_ray.direction;
+		const auto transformed_ray = ::ray(origin, direction);
 
 		if (!hit(transformed_ray, t_min, t_max, info))
 			return false;

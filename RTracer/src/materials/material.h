@@ -3,7 +3,6 @@
 #include "serializable.h"
 #include "texture.h"
 #include "core/color.h"
-#include "core/vec3_utility.h"
 
 struct hit_info;
 class ray;
