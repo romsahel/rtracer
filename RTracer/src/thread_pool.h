@@ -20,8 +20,22 @@ public:
 		init_mutex.unlock();
 	}
 
-	virtual ~thread_pool()
+	~thread_pool()
 	{
+		terminate();
+	}
+	
+	bool is_terminated = false;
+	void terminate()
+	{
+		task_mutex.lock();
+		is_terminated = true;
+		task_mutex.unlock();
+		while (!threads.empty())
+		{
+			threads.front().join();
+			threads.pop_front();
+		}
 	}
 
 	template <typename Fn, typename... Args>
@@ -82,16 +96,19 @@ private:
 		while (true)
 		{
 			task_mutex.lock();
+			bool has_task = false;
 			std::remove_reference_t<std::future<void>&> task;
-			if (!tasks.empty())
+			if (has_task = !tasks.empty(), has_task)
 			{
 				task = std::move(tasks.front());
 				tasks.pop();
 			}
 			task_mutex.unlock();
 
-			if (!task.valid())
+			if (!has_task)
 			{
+				if (is_terminated)
+					return;
 				std::this_thread::yield();
 				continue;
 			}
