@@ -10,13 +10,18 @@
 struct raytrace_settings
 {
 	raytrace_settings(int image_width, int image_height)
-		: image_width(image_width),
-		  image_height(image_height)
+		: image_width(image_width)
+	,		  image_height(image_height)
+	,		  inv_image_width(1.0f / static_cast<float>(image_height - 1))
+	,		  inv_image_height(1.0f / static_cast<float>(image_height - 1))
 	{
 	}
 
 	const int image_width;
 	const int image_height;
+
+	const float inv_image_width;
+	const float inv_image_height;
 
 	bool use_bvh = true;
 };
