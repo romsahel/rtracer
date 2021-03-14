@@ -44,7 +44,7 @@ public:
 	// with minimal bounce depth and a solid-white sky to produce a black and white mask
 	void render(void* selection, material& selection_material, const camera& camera, raytrace_renderer& renderer)
 	{
-		if (has_valid_render()) return;
+		/*if (has_valid_render())*/ return;
 
 		auto* hittable_selection = static_cast<hittable*>(selection);
 		material* saved_material = hittable_selection->material;

@@ -3,6 +3,7 @@
 #include <execution>
 
 #include "camera.h"
+#include "thread_pool.h"
 #include "world.h"
 #include "core/color.h"
 #include "materials/lambertian_material.h"
@@ -12,7 +13,7 @@ struct raytrace_settings
 	raytrace_settings(int image_width, int image_height)
 		: image_width(image_width)
 	,		  image_height(image_height)
-	,		  inv_image_width(1.0f / static_cast<float>(image_height - 1))
+	,		  inv_image_width(1.0f / static_cast<float>(image_width - 1))
 	,		  inv_image_height(1.0f / static_cast<float>(image_height - 1))
 	{
 	}
@@ -192,12 +193,16 @@ struct raytrace_render_thread
 			thread = std::thread(&raytrace_render_thread::loop, this);
 		}
 	}
+	
+	static constexpr size_t thread_count = 6;
+	static inline thread_pool pool{thread_pool(thread_count)};
 
 	void clear()
 	{
 		is_alive = false;
 		commands.clear();
 		thread.join();
+		pool.terminate();
 	}
 
 	/// <summary>
@@ -209,35 +214,47 @@ struct raytrace_render_thread
 	{
 		auto start = std::chrono::high_resolution_clock::now();
 
-
+		const int it_by_frame = 1;
+		
 		// render settings
-		const float inv_samples_per_pixel = 1.0f / data.iteration;
+		const float inv_samples_per_pixel = 1.0f / static_cast<float>(static_cast<int>(data.iteration) + it_by_frame - 1);
 		const raytrace_render_settings render_settings = data.settings;
-		std::vector<unsigned char>& pixel_colors = data.back_buffer();
-		float inv_width = 1.0f / (static_cast<float>(raytrace_settings.image_width) - 1);
-		float inv_height = 1.0f / (static_cast<float>(raytrace_settings.image_height) - 1);
+		std::vector<unsigned char>& pixel_colors = data.front_buffer();
 
-		std::for_each(
-			std::execution::par,
-			data.pixels.begin(),
-			data.pixels.end(),
-			[&pixel_colors, &world, &camera, render_settings,
-				inv_samples_per_pixel, inv_width, inv_height](raytrace_pixel& pixel)
+		const size_t pixel_count = data.pixels.size();
+		const int offset = static_cast<int>(data.iteration) % 3;
+		const int nb = pixel_count / thread_count;
+		auto f = [&pixel_colors, &world, &camera, render_settings,
+				inv_samples_per_pixel,
+				inv_width{raytrace_settings.inv_image_width}, inv_height{raytrace_settings.inv_image_height},
+				it_by_frame, &pixels{data.pixels}]
+		(int start, int end)
+		{
+			for (int j = start; j < end; j += 3)
 			{
-				const float u = (pixel.x + random::static_double.get()) * inv_width;
-				const float v = (pixel.y + random::static_double.get()) * inv_height;
-				pixel.color = color(pixel.color
-					+ ray_color_with_gradient_sky_attenuated(camera.compute_ray_to(u, v), world,
-					                                         render_settings, color::white(), color::black()));
+				for (int i = 0; i < it_by_frame; i++)
+				{
+					const float u = (pixels[j].x + random::static_double.get()) * inv_width;
+					const float v = (pixels[j].y + random::static_double.get()) * inv_height;
+					pixels[j].color = color(pixels[j].color
+						+ ray_color_with_gradient_sky_attenuated(camera.compute_ray_to(u, v), world,
+						                                         render_settings, color::white(),
+						                                         color::black()));
+				}
 
-				// convert pixel.color into image-readable ascii pixel_colors
-				vec3 c = to_writable_color(pixel.color, inv_samples_per_pixel);
+				// convert pixels[j].color into image-readable ascii pixel_colors
+				vec3 c = to_writable_color(pixels[j].color, inv_samples_per_pixel);
 				for (int i = 0; i < 3; i++)
-					pixel_colors[pixel.index + i] = static_cast<unsigned char>(clamp(c[i], 0.0f, 255.0f));
-			});
+					pixel_colors[pixels[j].index + i] = static_cast<unsigned char>(clamp(c[i], 0.0f, 255.0f));
+			}
+		};
+		for (size_t i = 0; i < thread_count; i++)
+		{
+			pool.async(f, i * nb + offset, std::min((i + 1) * nb + offset, pixel_count));
+		}
+		pool.wait();
 
-		data.iteration++;
-		data.swap_buffers();
+		data.iteration += static_cast<float>(it_by_frame) / 3.0f;
 
 		const auto stop = std::chrono::high_resolution_clock::now();
 		const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
@@ -312,6 +329,7 @@ public:
 				{
 					current_render.back_buffer().emplace_back();
 					current_render.front_buffer().emplace_back();
+					empty_render.front_buffer().emplace_back();
 					index++;
 				}
 			}
