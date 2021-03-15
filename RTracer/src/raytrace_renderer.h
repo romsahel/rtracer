@@ -174,7 +174,7 @@ struct raytrace_render_thread
 		}
 	}
 	
-	static constexpr size_t thread_count = 6;
+	static constexpr size_t thread_count = 8;
 	static inline thread_pool pool{thread_pool(thread_count)};
 
 	void clear()
@@ -194,7 +194,7 @@ struct raytrace_render_thread
 	{
 		auto chrono_start = std::chrono::high_resolution_clock::now();
 
-		constexpr int it_by_frame = 1;
+		int it_by_frame = data.iteration > 30 ? 25 : 1;
 		
 		// render settings
 		const float inv_samples_per_pixel = 1.0f / static_cast<float>(static_cast<int>(data.iteration) + it_by_frame - 1);
@@ -202,15 +202,16 @@ struct raytrace_render_thread
 		std::vector<unsigned char>& pixel_colors = data.front_buffer;
 
 		const size_t pixel_count = data.pixels.size();
-		const int offset = static_cast<int>(data.iteration) % 3;
+		auto increment = 1;
+		const int offset = increment > 1 ? static_cast<int>(data.iteration) % increment : 0;
 		const size_t nb = pixel_count / thread_count;
 		auto f = [&pixel_colors, &world, &camera, render_settings,
 				inv_samples_per_pixel,
 				inv_width{raytrace_settings.inv_image_width}, inv_height{raytrace_settings.inv_image_height},
-				it_by_frame, &pixels{data.pixels}]
+				it_by_frame, increment, &pixels{data.pixels}]
 		(size_t start, size_t end)
 		{
-			for (size_t j = start; j < end; j += 3)
+			for (size_t j = start; j < end; j += increment)
 			{
 				for (int i = 0; i < it_by_frame; i++)
 				{
@@ -234,7 +235,7 @@ struct raytrace_render_thread
 		}
 		pool.wait();
 
-		data.iteration += static_cast<float>(it_by_frame) / 3.0f;
+		data.iteration += static_cast<float>(it_by_frame) / static_cast<float>(increment);
 
 		const auto chrono_stop = std::chrono::high_resolution_clock::now();
 		const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(chrono_stop - chrono_start);

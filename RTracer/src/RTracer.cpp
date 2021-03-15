@@ -226,7 +226,7 @@ int main()
 	
 	camera camera = [&]()
 	{
-		switch (0)
+		switch (1)
 		{
 		case 0:
 			return make_sphere_scene(world, materials); // average: 179 - 184 (no bvh) || post-opti: 68 - 123 (no bvh)
