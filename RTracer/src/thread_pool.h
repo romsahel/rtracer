@@ -24,7 +24,25 @@ public:
 	{
 		terminate();
 	}
-	
+
+	void wait() const
+	{
+		while (!tasks.empty() || in_progress.load() > 0)
+			std::this_thread::yield();
+	}
+
+	void interrupt()
+	{
+		task_mutex.lock();
+		while (!tasks.empty())
+		{
+			tasks.pop();
+		}
+		task_mutex.unlock();
+
+		wait();
+	}
+
 	bool is_terminated = false;
 	void terminate()
 	{
@@ -78,14 +96,9 @@ public:
 		return std::move(return_wrapper);
 	}
 
-	void wait() const
-	{
-		while (!tasks.empty())
-			std::this_thread::yield();
-	}
-
 	std::list<std::thread> threads;
 	std::queue<std::future<void>> tasks;
+	std::atomic<int> in_progress;
 
 private:
 	void thread_func()
@@ -114,7 +127,9 @@ private:
 			}
 			else
 			{
+				in_progress += 1;
 				task.get();
+				in_progress -= 1;
 			}
 		}
 	}

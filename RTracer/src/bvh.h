@@ -8,9 +8,7 @@
 
 inline bool box_compare(const hittable* a, const hittable* b, int axis)
 {
-	const aabb& box_a = a->bbox;
-	const aabb& box_b = b->bbox;
-	return box_a.minimum[axis] < box_b.maximum[axis] && box_a.minimum[axis] < box_b.minimum[axis];
+	return a->bbox.minimum[axis] < b->bbox.maximum[axis] && a->bbox.minimum[axis] < b->bbox.minimum[axis];
 }
 
 bool box_x_compare(const hittable* a, const hittable* b) { return box_compare(a, b, 0); }
@@ -30,45 +28,52 @@ public:
 	bvh_node(std::vector<hittable*> objects, size_t start, size_t end) : hittable("BVH Node")
 	{
 		// choose a comparison axis
-		int axis = random::get<int>(0, 2);
+		const int axis = random::get<int>(0, 2);
 
 		// if the list only has two elements, put one in each subtree and stop there
-		size_t count = end - start;
+		const size_t count = end - start;
 		if (count == 1)
 		{
-			left = objects[start];
-			right = objects[start];
+			m_left = objects[start];
+			m_right = objects[start];
 		}
 		else if (count == 2)
 		{
-			left = objects[start];
-			right = objects[start + 1];
-			if (!box_compare(left, right, axis))
-				std::swap(left, right);
+			if (box_compare(objects[start], objects[start + 1], axis))
+			{
+				m_left = objects[start];
+				m_right = objects[start + 1];
+			}
+			else
+			{
+				m_left = objects[start + 1];
+				m_right = objects[start];
+			}
 		}
 		else // sort the primitives along the axis
 		{
-			using comparer_t = bool(const hittable*, const hittable*);
-			static std::vector<comparer_t*> box_comparers = {box_x_compare, box_y_compare, box_z_compare};
-			std::sort(objects.begin(), objects.end(), box_x_compare);
+			std::sort(objects.begin() + start, objects.begin() + end, [axis](const hittable* a, const hittable* b)
+			{
+				return box_compare(a, b, axis);
+			});
 			
 			if (count == 3)
 			{
-				// put the first two in left and the last one as a leaf
+				// put the first two in m_left and the last one as a leaf
 				// this avoid an uncessary bvh_node
-				left = new bvh_node(objects, start, start + 2);
-				right = objects[end - 1];
+				m_left = new bvh_node(objects, start, start + 2);
+				m_right = objects[end - 1];
 			}
 			else
 			{
 				// put half in each subtree
 				const size_t half = start + count / 2;
-				left = new bvh_node(objects, start, half);
-				right = new bvh_node(objects, half, end);
+				m_left = new bvh_node(objects, start, half);
+				m_right = new bvh_node(objects, half, end);
 			}
 		}
 
-		bbox = aabb::surrounding(left->bbox, right->bbox);
+		bbox = aabb::surrounding(m_left->bbox, m_right->bbox);
 	}
 
 	void internal_update() override
@@ -85,22 +90,27 @@ public:
 	{
 		if (bbox.hit(ray, t_min, t_max))
 		{
-			const bool hit_left = left->base_hit(ray, t_min, t_max, info);
-			const bool hit_right = right->base_hit(ray, t_min, info.distance, info);
-			return hit_left || hit_right;
+			const bool hit_m_left = m_left->base_hit(ray, t_min, t_max, info);
+			const bool hit_m_right = m_right->base_hit(ray, t_min, info.distance, info);
+			return hit_m_left || hit_m_right;
 		}
 		return false;
 	}
 
 	~bvh_node() override
 	{
-		if (dynamic_cast<const bvh_node*>(left) != nullptr)
-			delete left;
+		if (dynamic_cast<const bvh_node*>(m_left) != nullptr)
+		{
+			delete m_left;
+		}
 
-		if (dynamic_cast<const bvh_node*>(right) != nullptr)
-			delete right;
+		if (dynamic_cast<const bvh_node*>(m_right) != nullptr)
+		{
+			delete m_right;
+		}
 	}
 
-	hittable* left;
-	hittable* right;
+private:
+	hittable* m_left;
+	hittable* m_right;
 };

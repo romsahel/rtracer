@@ -74,6 +74,7 @@ public:
 
 	void signal_scene_change()
 	{
+		delete m_bvh;
 		m_bvh = new bvh_node(m_list, 0, m_list.size());
 	}
 

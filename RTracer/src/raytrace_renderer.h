@@ -155,13 +155,13 @@ struct raytrace_render_thread
 		is_alive = false;
 	}
 
-	void pause_synchronous()
+	void interrupt()
 	{
 		if (is_alive)
 		{
 			pause();
-			pool.wait();
 			thread.join();
+			pool.interrupt();
 		}
 	}
 
@@ -329,6 +329,7 @@ public:
 	{
 		current_render.set_pixels_from(empty_render);
 		current_render.iteration = 1.0f;
+		thread.interrupt();
 	}
 
 	void clean_frontbuffer()

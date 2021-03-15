@@ -386,14 +386,14 @@ int main()
 		if (scene_changed)
 		{
 			raytrace_renderer.signal_scene_change();
+			selection_overlay.signal_change();
+			world.signal_scene_change();
 			//if (camera.has_changed())
 			//{
 			//	raytrace_renderer.clean_frontbuffer();
 			//}
 
 			raytrace_renderer.render(camera, world);
-			selection_overlay.signal_change();
-			world.signal_scene_change();
 		}
 
 		bool has_selection = selection != nullptr && selection != &camera;
