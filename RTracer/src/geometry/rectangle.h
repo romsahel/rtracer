@@ -1,7 +1,7 @@
 ﻿#pragma once
 
 #include "core/aabb.h"
-#include "core/hittable.h"
+#include "abstract/hittable.h"
 
 class rectangle : public hittable
 {

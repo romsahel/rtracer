@@ -1,5 +1,6 @@
 ﻿#pragma once
 
+#include "hit_info.h"
 #include "ray.h"
 #include "vec3.h"
 
@@ -73,12 +74,11 @@ public:
 			{
 				for (float k = -1; k < 2.0f; k += 2.0f)
 				{
-					const auto position = multiply_point_fast(tsf,
-					                                          vec3{
+					const auto position = vector3::multiply_point_fast(vec3{
 						                                          center.x + i * extent.x,
 						                                          center.y + j * extent.y,
 						                                          center.z + k * extent.z
-					                                          });
+					                                          }, tsf);
 					for (int l = 0; l < 3; l++)
 					{
 						minimum[l] = fmin(minimum[l], position[l]);
@@ -90,22 +90,37 @@ public:
 	}
 	
 	/// <summary>
-	/// returns true if the given ray hits the aabb at a distance comprised between t_min and t_max
+	/// if the given ray hits the aabb at a distance comprised between t_min and t_max
+	/// return [ true, the normal axis, distance from ray origin to hitpoint ]
 	/// </summary>
-	[[nodiscard]] bool hit(const ray& r, float t_min, float t_max) const
+	[[nodiscard]] auto hit_with_info(const ray& r, float t_min, float t_max) const
 	{
+		int axis = 0;
 		for (int i = 0; i < 3; i++)
 		{
 			float t0 = (minimum[i] - r.origin[i]) * r.inv_direction[i];
 			float t1 = (maximum[i] - r.origin[i]) * r.inv_direction[i];
 			if (r.inv_direction[i] < 0.0f)
 				std::swap(t0, t1);
-			t_min = t0 > t_min ? t0 : t_min;
+			if (t0 > t_min)
+			{
+				t_min = t0;
+				axis = i;
+			}
 			t_max = t1 < t_max ? t1 : t_max;
 			if (t_max <= t_min)
-				return false;
+				return std::tuple{false, 0, 0.0f};
 		}
-		return true;
+
+		return std::tuple{true, axis, t_min};
+	}
+	
+	/// <summary>
+	/// returns true if the given ray hits the aabb at a distance comprised between t_min and t_max
+	/// </summary>
+	[[nodiscard]] bool hit(const ray& r, float t_min, float t_max) const
+	{
+		return std::get<0>(hit_with_info(r, t_min, t_max));
 	}
 	
 	/// <summary>

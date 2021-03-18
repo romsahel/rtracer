@@ -2,10 +2,10 @@
 
 #include <glm/gtx/matrix_decompose.hpp>
 
-#include "vec3.h"
-#include "aabb.h"
-#include "hit_info.h"
-#include "ray.h"
+#include "core/vec3.h"
+#include "core/aabb.h"
+#include "core/hit_info.h"
+#include "core/ray.h"
 #include "serializable.h"
 #include "serializable_node.h"
 
@@ -20,29 +20,11 @@ protected:
 public:
 	explicit hittable(const char* name);
 
-	virtual bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info)
-	{
-		const auto origin = multiply_point_fast(inv_transform, base_ray.origin);
-		const auto direction = glm::mat3(inv_transform) * base_ray.direction;
-		const auto transformed_ray = ::ray(origin, direction);
-
-		if (!hit(transformed_ray, t_min, t_max, info))
-			return false;
-
-		info.normal = glm::mat3(transform) * info.normal;
-		info.point = multiply_point_fast(transform, info.point);
-
-		return true;
-	}
+	virtual bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info);
 
 	virtual bool hit(const ray& ray, float t_min, float t_max, hit_info& info) = 0;
-	
-	void update()
-	{
-		inv_transform = inverse(transform);
-		internal_update();
-		bbox.transform(transform);
-	}
+
+	void update();
 
 	std::shared_ptr<serializable_node_base> serialize() override
 	{

@@ -3,9 +3,8 @@
 #include <vector>
 
 
-#include "bvh.h"
-#include "core/hittable.h"
-#include "materials/material.h"
+#include "geometry/abstract/bvh.h"
+#include "geometry/abstract/hittable.h"
 
 class world
 {

@@ -1,12 +1,10 @@
 #include <execution>
-#include <chrono>
 #include <filesystem>
 
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <string>
 
 #include "stb_image_write.h"
-#include "stb_image.h"
 
 #include "core/color.h"
 
@@ -28,9 +26,8 @@
 
 #include "materials/dieletric_material.h"
 #include "materials/image_texture.h"
-
-#include "serializable_node.h"
 #include "thread_pool.h"
+#include "core/random.h"
 
 
 glm::mat4 set_position_and_rotation(const vec3& position, float angle, const vec3& axis)
@@ -100,9 +97,9 @@ camera make_cornell_scene(world& world, object_store<material>& materials)
 	left_box.transform = set_position_and_rotation(vec3(0.3f, -0.7f, 0.25f), -15.0f, vector3::up());
 	left_box.update();
 
-	//auto& sphere = world.add<::sphere>("Sphere", vec3(0.3f, -0.7f + 0.65f, 0.25f), 0.25f);
-	//sphere.material = &materials.add<metal_material>("Chrome", color(0.8f, 0.8f, 0.8f), 0.05f);
-	//sphere.update();
+	auto& sphere = world.add<::sphere>("Sphere", vec3(0.3f, -0.7f + 0.65f, 0.25f), 0.25f);
+	sphere.material = &materials.add<metal_material>("Chrome", color(0.8f, 0.8f, 0.8f), 0.05f);
+	sphere.update();
 
 	::camera camera{1.0f};
 	camera.origin = point3(0.0f, 0.0f, size.z * 2.0f);
@@ -207,12 +204,12 @@ camera make_box_scene(world& world, object_store<material>& materials)
 	light_material.emission = solid_color::white();
 	light_material.emission_strength = 4.0f;
 
-	auto& light = world.add<sphere>("Light", point3(0.0f, 0.0f, -0.8f), 0.25f);
+	auto& light = world.add<sphere>("Light", point3(-1.0f, 1.0f, 1.0f), 0.25f);
 	light.material = &light_material;
 	light.update();
 
 	::camera camera{16.0f / 9.0f};
-	camera.origin = point3(0.0f, 0.0f, 12.0f);
+	camera.origin = point3(0.0f, 5.0f, 6.0f);
 	camera.target = point3(0.0f, 0.0f, 0.0f);
 	camera.vertical_fov = 20.0f;
 	return camera;

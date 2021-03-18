@@ -2,9 +2,6 @@
 
 #include <iostream>
 
-#include <cmath>
-#include <emmintrin.h>
-
 #include "utility.h"
 
 #include <glm/glm.hpp>
@@ -16,7 +13,6 @@
 #include <glm/matrix.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/vec4.hpp>
-#include <vector>
 
 #include "glm/gtx/quaternion.hpp"
 #include "glm/gtx/transform.hpp"
@@ -32,29 +28,27 @@ inline std::ostream& operator<<(std::ostream& out, const vec3& v)
 	return out << v.x << ' ' << v.y << ' ' << v.z;
 }
 
+/// <summary>
+/// return the sum of all components of the vector
+/// </summary>
 template <typename vec_t>
 inline float sum(const vec_t& v)
 {
 	return glm::compAdd(v);
 }
 
+/// <summary>
+/// check if the give vector is zero
 template <typename vec_t>
 inline bool is_near_zero(const vec_t& v)
 {
 	return length2(v) < constants::epsilon * constants::epsilon;
 }
 
-inline auto multiply_point_fast(const glm::mat4& m, const glm::vec3& v)
-{
-	return vec3{
-		(m[0][0] * v.x + m[1][0] * v.y + m[2][0] * v.z) + m[3][0],
-		(m[0][1] * v.x + m[1][1] * v.y + m[2][1] * v.z) + m[3][1],
-		(m[0][2] * v.x + m[1][2] * v.y + m[2][2] * v.z) + m[3][2]
-	};
-}
-
 namespace vector3
 {
+	// transform the given point by the given matrix and return the result
+	glm::vec3 multiply_point_fast(const glm::vec3& v, const glm::mat4& m);
 	// return a random vec3 contained in a sphere placed at the origin and of a radius of 1
 	vec3 random_in_unit_sphere(float sphere_angle = 2 * constants::pi);
 	// return a random vec3 contained in a disk placed at the origin and of a radius of 1

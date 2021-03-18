@@ -1,10 +1,9 @@
 ﻿#pragma once
 
 #include "material.h"
-#include "texture.h"
 
 #include "core/color.h"
-#include "core/hittable.h"
+#include "geometry/abstract/hittable.h"
 
 /// <summary>
 /// lambertian material are solid/mat-looking materials. They are the default 'diffuse' material

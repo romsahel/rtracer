@@ -3,7 +3,7 @@
 #include "material.h"
 
 #include "core/color.h"
-#include "core/hittable.h"
+#include "geometry/abstract/hittable.h"
 
 /// <summary>
 /// metal material are metal-looking materials.

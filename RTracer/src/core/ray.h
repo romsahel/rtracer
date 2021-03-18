@@ -7,11 +7,24 @@ class ray
 {
 public:
 	ray() = default;
-	
+
+	/// <summary>
+	/// construct a ray from the given origin and direction
+	/// </summary>
 	ray(const point3& origin, const direction3& direction)
 		: origin(origin),
 		  direction(normalize(direction)),
 		  inv_direction(glm::one<vec3>() / direction)
+	{
+	}
+
+	/// <summary>
+	/// construct a ray from the given origin and direction and pre-computed inverse of its direction
+	/// </summary>
+	ray(const point3& origin, const direction3& direction, const direction3& inv_direction)
+		: origin(origin),
+		  direction(direction),
+		  inv_direction(inv_direction)
 	{
 	}
 

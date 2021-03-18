@@ -189,12 +189,12 @@ struct raytrace_render_thread
 	/// render to a custom render_data using a custom ray_color_provider.
 	/// Default one is ray_color_with_gradient_sky
 	/// </summary>
-	static bool render(const camera& camera, world& world, raytrace_render_data& data,
+	bool render(const camera& camera, world& world, raytrace_render_data& data,
 	                   const raytrace_settings& raytrace_settings)
 	{
 		auto chrono_start = std::chrono::high_resolution_clock::now();
 
-		int it_by_frame = data.iteration > 30 ? 25 : 1;
+		int it_by_frame = 1;
 		
 		// render settings
 		const float inv_samples_per_pixel = 1.0f / static_cast<float>(static_cast<int>(data.iteration) + it_by_frame - 1);
@@ -202,39 +202,55 @@ struct raytrace_render_thread
 		std::vector<unsigned char>& pixel_colors = data.front_buffer;
 
 		const size_t pixel_count = data.pixels.size();
-		auto increment = 1;
-		const int offset = increment > 1 ? static_cast<int>(data.iteration) % increment : 0;
-		const size_t nb = pixel_count / thread_count;
-		auto f = [&pixel_colors, &world, &camera, render_settings,
+		int increment = 1;
+
+		const auto process_pixel = [&pixel_colors, &world, &camera, render_settings,
 				inv_samples_per_pixel,
 				inv_width{raytrace_settings.inv_image_width}, inv_height{raytrace_settings.inv_image_height},
-				it_by_frame, increment, &pixels{data.pixels}]
-		(size_t start, size_t end)
+				it_by_frame, &pixels{data.pixels}](raytrace_pixel& pixel)
 		{
-			for (size_t j = start; j < end; j += increment)
+			for (int i = 0; i < it_by_frame; i++)
 			{
-				for (int i = 0; i < it_by_frame; i++)
-				{
-					const float u = (pixels[j].x + random::static_double.get()) * inv_width;
-					const float v = (pixels[j].y + random::static_double.get()) * inv_height;
-					pixels[j].color = color(pixels[j].color
-						+ ray_color_with_gradient_sky_attenuated(camera.compute_ray_to(u, v), world,
-						                                         render_settings, color::white(),
-						                                         color::black()));
-				}
-
-				// convert pixels[j].color into image-readable ascii pixel_colors
-				vec3 c = sqrt(inv_samples_per_pixel * pixels[j].color) * 255.0f;
-				for (int i = 0; i < 3; i++)
-					pixel_colors[pixels[j].index + static_cast<long>(i)] = static_cast<unsigned char>(clamp(c[i], 0.0f, 255.0f));
+				const float u = (pixel.x + random::static_float.get()) * inv_width;
+				const float v = (pixel.y + random::static_float.get()) * inv_height;
+				pixel.color = color(pixel.color
+					+ ray_color_with_gradient_sky_attenuated(camera.compute_ray_to(u, v), world,
+					                                         render_settings, color::white(),
+					                                         color::black()));
 			}
-		};
-		for (size_t i = 0; i < thread_count; i++)
-		{
-			pool.async(f, static_cast<size_t>(i * nb + offset), std::min((i + 1) * nb + offset, pixel_count));
-		}
-		pool.wait();
 
+			// convert pixels[j].color into image-readable ascii pixel_colors
+			vec3 c = sqrt(inv_samples_per_pixel * pixel.color) * 255.0f;
+			for (int i = 0; i < 3; i++)
+				pixel_colors[pixel.index + static_cast<long>(i)] = static_cast<unsigned char>(clamp(
+					c[i], 0.0f, 255.0f));
+		};
+		
+		if (data.iteration > 10)
+		{
+			std::for_each(std::execution::par, data.pixels.begin(), data.pixels.end(), process_pixel);
+		}
+		else
+		{
+			increment = 3;
+			const int offset = static_cast<int>(data.iteration) % increment;
+			const size_t nb = pixel_count / thread_count;
+			auto f = [process_pixel, increment, &pixels{data.pixels}, &is_alive{is_alive}]
+			(size_t start, size_t end)
+			{
+				for (size_t j = start; j < end && is_alive; j += increment)
+				{
+					process_pixel(pixels[j]);
+				}
+			};
+
+			for (size_t i = 0; i < thread_count; i++)
+			{
+				pool.async(f, static_cast<size_t>(i * nb + offset), std::min((i + 1) * nb + offset, pixel_count));
+			}
+			pool.wait();
+		}
+		
 		data.iteration += static_cast<float>(it_by_frame) / static_cast<float>(increment);
 
 		const auto chrono_stop = std::chrono::high_resolution_clock::now();
@@ -328,9 +344,9 @@ public:
 	/// </summary>
 	void signal_scene_change()
 	{
+		thread.interrupt();
 		current_render.set_pixels_from(empty_render);
 		current_render.iteration = 1.0f;
-		thread.interrupt();
 	}
 
 	void clean_frontbuffer()

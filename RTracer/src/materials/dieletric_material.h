@@ -3,7 +3,7 @@
 #include "material.h"
 
 #include "core/color.h"
-#include "core/hittable.h"
+#include "geometry/abstract/hittable.h"
 
 /// <summary>
 /// dieletric material are glass-like materials
@@ -23,7 +23,7 @@ public:
 		const float refraction_ratio = hit.front_face ? m_inv_index_of_refraction : m_index_of_refraction;
 		const float cos_theta = fmin(dot(-raycast.direction, hit.normal), 1.0f);
 		const float sin_theta = sqrt(1.0f - cos_theta * cos_theta);
-		if (refraction_ratio * sin_theta < 1.0f || reflectance(cos_theta, refraction_ratio) > random::static_double.get())
+		if (refraction_ratio * sin_theta < 1.0f || reflectance(cos_theta, refraction_ratio) > random::static_float.get())
 		{
 			const direction3 reflected = direction3(reflect(raycast.direction, hit.normal));
 			scattered = ray(hit.point, reflected);

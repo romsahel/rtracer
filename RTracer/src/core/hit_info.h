@@ -18,12 +18,13 @@ struct hit_info
 	float distance = constants::infinity;
 	// true if the raycast hit the object from its frontside ; false if it hit from the backside
 	bool front_face = false;
-
-	// material of the hit object
-	material* material = nullptr;
+	
 	// uv coordinate of the material at the hitpoint
 	vec2 uv_coordinates = vec2(0.0f);
-
+	
+	// material of the hit object
+	material* material = nullptr;
+	// the hit object
 	hittable* object = nullptr;
 
 	explicit hit_info(::material* material)

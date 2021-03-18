@@ -4,7 +4,9 @@
 #include <iostream>
 
 #include "core/aabb.h"
-#include "core/hittable.h"
+#include "core/random.h"
+
+#include "hittable.h"
 
 inline bool box_compare(const hittable* a, const hittable* b, int axis)
 {
@@ -14,6 +16,36 @@ inline bool box_compare(const hittable* a, const hittable* b, int axis)
 bool box_x_compare(const hittable* a, const hittable* b) { return box_compare(a, b, 0); }
 bool box_y_compare(const hittable* a, const hittable* b) { return box_compare(a, b, 1); }
 bool box_z_compare(const hittable* a, const hittable* b) { return box_compare(a, b, 2); }
+
+class bvh_empty_leaf : public hittable
+{
+protected:
+	void internal_update() override
+	{
+	}
+
+	explicit bvh_empty_leaf()
+		: hittable("")
+	{
+	}
+
+public:
+	bool base_hit(const ray&, float, float, hit_info&) override
+	{
+		return false;
+	}
+
+	bool hit(const ray&, float, float, hit_info&) override
+	{
+		return false;
+	}
+
+	static bvh_empty_leaf* instance()
+	{
+		static bvh_empty_leaf node;
+		return &node;
+	}
+};
 
 /// <summary>
 /// bounding volume hierarchy:
@@ -35,7 +67,7 @@ public:
 		if (count == 1)
 		{
 			m_left = objects[start];
-			m_right = objects[start];
+			m_right = bvh_empty_leaf::instance();
 		}
 		else if (count == 2)
 		{
@@ -56,7 +88,7 @@ public:
 			{
 				return box_compare(a, b, axis);
 			});
-			
+
 			if (count == 3)
 			{
 				// put the first two in m_left and the last one as a leaf
@@ -78,23 +110,22 @@ public:
 
 	void internal_update() override
 	{
-		
 	}
 
 	bool base_hit(const ray& base_ray, float t_min, float t_max, hit_info& info) override
 	{
-		return hit(base_ray, t_min, t_max, info);
-	}
-	
-	bool hit(const ray& ray, float t_min, float t_max, hit_info& info) override
-	{
-		if (bbox.hit(ray, t_min, t_max))
+		if (bbox.hit(base_ray, t_min, t_max))
 		{
-			const bool hit_m_left = m_left->base_hit(ray, t_min, t_max, info);
-			const bool hit_m_right = m_right->base_hit(ray, t_min, info.distance, info);
+			const bool hit_m_left = m_left->base_hit(base_ray, t_min, t_max, info);
+			const bool hit_m_right = m_right->base_hit(base_ray, t_min, info.distance, info);
 			return hit_m_left || hit_m_right;
 		}
 		return false;
+	}
+
+	bool hit(const ray&, float, float, hit_info&) override
+	{
+		throw new std::logic_error("Not Implemented");
 	}
 
 	~bvh_node() override
