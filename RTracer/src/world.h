@@ -30,10 +30,28 @@ public:
 		return *added;
 	}
 
+	template <typename T>
+	T& add(T* added)
+	{
+		m_list.push_back(added);
+		added->update();
+		return *added;
+	}
+
 	void remove(const std::vector<hittable*>::const_iterator& to_remove)
 	{
 		delete *to_remove;
 		m_list.erase(to_remove);
+	}
+
+	void clear()
+	{
+		for (hittable* item  : m_list)
+		{
+			delete item;
+		}
+
+		m_list.clear();
 	}
 
 	void shallow_add(hittable* hittable)

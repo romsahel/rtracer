@@ -66,6 +66,11 @@ public:
 		return node;
 	}
 
+	[[nodiscard]] hittable* clone() const override
+	{
+		return new sphere(*this);
+	}
+
 	float radius;
 
 private:

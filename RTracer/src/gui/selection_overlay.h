@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "raytrace_renderer.h"
+#include "renderer/raytrace_renderer.h"
 #include "world.h"
 #include "gui/gui_image.h"
 
@@ -11,61 +11,71 @@
 class selection_overlay
 {
 public:
-	selection_overlay(const raytrace_render_data& base)
-		: m_render(base)
+	selection_overlay(raytrace_renderer& renderer)
+		: m_renderer(renderer)
+		  , m_selection_material{material_store().add<lambertian_material>("Selection material", *solid_color::white())}
+		  , m_render{renderer.current_render}
 	{
-		m_render.settings.bounce_depth = 1;
+		// orange emissive material
+		m_selection_material.emission = &texture_store().add<solid_color>(color(1.0f, 0.5f, 0.0f));
+		m_selection_material.emission_strength = 0.25f;
+
+		// limit depth and number of iteration so that it renders as quick as possible
+		m_render.settings.bounce_depth = 2;
+		m_render.target_iteration = 2;
+		
+		// background is black so that it masks everything.
 		m_render.settings.bounce_depth_limit_color = color::white();
 		m_render.settings.background_bottom_color = color::black();
 		m_render.settings.background_top_color = color::black();
+		m_render.settings.background_strength = 0.0f;
+
+		// we want to render every pixel for the first iteration
+		m_render.extra_progressive = false;
+
+		// no bvh needed for only one object
+		m_world.use_bvh = false;
 	}
 
-	void signal_change()
+	/// <summary>
+	/// signal the overlay the selection changed (modified or newly selected) and update the render (synchronously)
+	/// </summary>
+	void signal_change(void* selection, const camera& camera)
 	{
-		//m_render.iteration = 1.0f;
-	}
+		m_render.reset(m_renderer.empty_render);
+		reset_alpha();
 
-	bool has_valid_render()
-	{
-		return m_render.iteration >= 2.0;
+		// clear the world and only add a clone of the selection to it
+		m_world.clear();
+		hittable* clone = static_cast<hittable*>(selection)->clone();
+		clone->material = &m_selection_material;
+		m_world.add(clone);
+
+		// render the new selection mask and update the ui image
+		m_renderer.thread.render(camera, m_world, m_render);
+		m_image.update(m_render);
 	}
 
 	// Use ImGui to draw the mask at the given position and with the given size.
 	// Both these arguments should be the same as for the regular render so that the overlay renders on top
 	void draw_overlay(ImVec2 image_position, ImVec2 size)
 	{
-		if (!has_valid_render()) return;
-
+		const float alpha = m_alpha * (m_render.iteration - 1.0f);
 		ImGui::SetCursorPos(image_position);
-		ImGui::Image(m_image.texture_id(), size);
+		ImGui::Image(m_image.texture_id(), size, ImVec2(0, 0), ImVec2(1, 1), ImVec4(1, 1, 1, alpha));
+		m_alpha *= 0.96f;
 	}
 
-	// render only the given selected object
-	// with minimal bounce depth and a solid-white sky to produce a black and white mask
-	void render(void* selection, material& selection_material, const camera& camera, raytrace_renderer& renderer)
+	void reset_alpha()
 	{
-		/*if (has_valid_render())*/ return;
-
-		auto* hittable_selection = static_cast<hittable*>(selection);
-		material* saved_material = hittable_selection->material;
-		hittable_selection->material = &selection_material;
-		m_world.shallow_add(hittable_selection);
-
-		m_world.signal_scene_change();
-		m_render.set_pixels_from(renderer.empty_render);
-		m_render.iteration = 10.0;
-
-		renderer.render(camera, m_world, m_render);
-
-		m_image.update(renderer.settings.image_width, renderer.settings.image_height,
-		               m_render.front_buffer.data());
-
-		hittable_selection->material = saved_material;
-		m_world.shallow_clear();
+		m_alpha = 1.0f;
 	}
 
 private:
+	raytrace_renderer& m_renderer;
+	lambertian_material& m_selection_material;
 	raytrace_render_data m_render;
 	gui_image m_image{true};
 	world m_world;
+	float m_alpha;
 };

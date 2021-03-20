@@ -1,7 +1,6 @@
 #include <execution>
 #include <filesystem>
 
-#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <string>
 
 #include "stb_image_write.h"
@@ -20,7 +19,7 @@
 #include "gui/gui_image.h"
 #include "gui/selection_overlay.h"
 
-#include "raytrace_renderer.h"
+#include "renderer/raytrace_renderer.h"
 #include "world.h"
 #include "geometry/box.h"
 
@@ -219,7 +218,7 @@ int main()
 {
 	world world;
 
-	object_store<material> materials = material_store();
+	object_store<material>& materials = material_store();
 	
 	camera camera = [&]()
 	{
@@ -238,7 +237,6 @@ int main()
 	}();
 
 	camera.update();
-	material& selection_material = materials.add<lambertian_material>("Selection material", color(1.0f, 0.0, 0.0));
 
 	world.signal_scene_change();
 
@@ -257,7 +255,7 @@ int main()
 
 	raytrace_renderer.render(camera, world);
 
-	selection_overlay selection_overlay{raytrace_renderer.current_render};
+	selection_overlay selection_overlay{raytrace_renderer};
 
 	serializable* selection = nullptr;
 	serializable* material_selection = nullptr;
@@ -268,11 +266,11 @@ int main()
 	long long average_render_time = 0, min_render_duration = 0, max_render_duration = 0;
 	float render_prev_iteration = 0;
 
-	bool mouse_over_hierarchy = false;
+	bool mouse_over_hierarchy = false, prev_mouse_over_hierarchy = false;
 	bool is_hierarchy_focused;
 	vec3 viewer_mouse_pos{-1.0f, -1.0f, -1.0f};
 
-	while (!glfwWindowShouldClose(gui::window))
+	while (!gui::close_requested())
 	{
 		bool is_rendering = raytrace_renderer.thread.is_alive;
 		gui::start_frame();
@@ -333,13 +331,14 @@ int main()
 
 		if (is_hierarchy_focused = ImGui::Begin("Hierarchy"), is_hierarchy_focused)
 		{
+			prev_mouse_over_hierarchy = mouse_over_hierarchy;
 			mouse_over_hierarchy = ImGui::IsWindowHovered();
 
 			void* previous_selection = selection;
 			draw_hierarchy(camera, world, &selection);
 			if (previous_selection != selection)
 			{
-				selection_overlay.signal_change();
+				selection_overlay.signal_change(selection, camera);
 			}
 		}
 		ImGui::End();
@@ -379,21 +378,20 @@ int main()
 		}
 		ImGui::End();
 
-
+		
+		bool has_selection = selection != nullptr && selection != &camera;
 		if (scene_changed)
 		{
 			raytrace_renderer.signal_scene_change();
-			selection_overlay.signal_change();
 			world.signal_scene_change();
-			//if (camera.has_changed())
-			//{
-			//	raytrace_renderer.clean_frontbuffer();
-			//}
 
 			raytrace_renderer.render(camera, world);
+			if (has_selection)
+			{
+				selection_overlay.signal_change(selection, camera);
+			}
 		}
 
-		bool has_selection = selection != nullptr && selection != &camera;
 		if (ImGui::Begin("Viewer"))
 		{
 			bool is_window_focused = ImGui::IsWindowFocused();
@@ -403,6 +401,7 @@ int main()
 				                    ? ImVec2(window_size.x, window_size.x / static_cast<float>(camera.aspect_ratio()))
 				                    : ImVec2(window_size.y * static_cast<float>(camera.aspect_ratio()), window_size.y);
 			ImGui::Image(render_image.texture_id(), size);
+
 			auto rect_min = ImGui::GetItemRectMin();
 			auto rect_max = ImGui::GetItemRectMax();
 			auto mouse_pos = ImGui::GetMousePos();
@@ -421,7 +420,7 @@ int main()
 					              constants::infinity, hit))
 					{
 						selection = hit.object;
-						selection_overlay.signal_change();
+						selection_overlay.signal_change(selection, camera);
 					}
 				}
 			}
@@ -429,9 +428,11 @@ int main()
 			{
 				viewer_mouse_pos = vec3{-1.0f};
 			}
-
-			if (has_selection && mouse_over_hierarchy)
+			
+			if (has_selection)
 			{
+				if (!prev_mouse_over_hierarchy && mouse_over_hierarchy)
+					selection_overlay.reset_alpha();
 				selection_overlay.draw_overlay(image_position, size);
 			}
 		}
@@ -449,7 +450,7 @@ int main()
 				max_render_duration = 0;
 			}
 
-			render_image.update(image_width, image_height, raytrace_renderer.current_render.front_buffer.data());
+			render_image.update(image_width, image_height, raytrace_renderer.current_render.colors.data());
 			last_render_duration = raytrace_renderer.current_render.last_render_duration;
 			render_prev_iteration = raytrace_renderer.current_render.iteration;
 
@@ -458,16 +459,10 @@ int main()
 				total_render_duration += last_render_duration;
 				min_render_duration = std::min(min_render_duration, last_render_duration);
 				max_render_duration = std::max(max_render_duration, last_render_duration);
-				//average_render_time = static_cast<long long>((min_render_time + max_render_time) * 0.5f);
 				average_render_time = static_cast<long long>(
 					static_cast<float>(total_render_duration) / (raytrace_renderer.current_render.iteration - 2.0f)
 				);
 			}
-		}
-
-		if (has_selection)
-		{
-			selection_overlay.render(selection, selection_material, camera, raytrace_renderer);
 		}
 	}
 

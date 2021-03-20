@@ -45,6 +45,11 @@ public:
 		return node;
 	}
 
+	[[nodiscard]] hittable* clone() const override
+	{
+		return new box(*this);
+	}
+
 	vec3 size;
 
 private:

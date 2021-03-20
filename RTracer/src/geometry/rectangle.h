@@ -50,6 +50,11 @@ public:
 		node->children.push_back(std::make_shared<serializable_node<vec2>>("Size", &size));
 		return node;
 	}
+	
+	[[nodiscard]] hittable* clone() const override
+	{
+		return new rectangle(*this);
+	}
 
 	vec2 size;
 };

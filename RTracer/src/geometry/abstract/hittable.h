@@ -2,6 +2,8 @@
 
 #include <glm/gtx/matrix_decompose.hpp>
 
+
+#include "copyable.h"
 #include "core/vec3.h"
 #include "core/aabb.h"
 #include "core/hit_info.h"
@@ -35,6 +37,11 @@ public:
 		);
 	}
 
+	[[nodiscard]] virtual hittable* clone() const
+	{
+		return nullptr;
+	}
+	
 	// name is used for ui and debug purposes
 	std::string name;
 

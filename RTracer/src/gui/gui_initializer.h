@@ -13,7 +13,7 @@ static void glfw_error_callback(int error, const char* description)
 
 namespace gui
 {
-	GLFWwindow* window;
+	static inline GLFWwindow* window;
 
 	inline void enable_dockspace()
 	{
@@ -60,7 +60,7 @@ namespace gui
 		ImGui::End();
 	}
 
-	int initialize_opengl()
+	inline int initialize_opengl()
 	{
 		// Setup window
 		glfwSetErrorCallback(glfw_error_callback);
@@ -135,7 +135,12 @@ namespace gui
 		return 0;
 	}
 
-	void cleanup()
+	inline bool close_requested()
+	{
+		return glfwWindowShouldClose(window);
+	}
+
+	inline void cleanup()
 	{
 		// Cleanup
 		ImGui_ImplOpenGL3_Shutdown();
@@ -144,5 +149,33 @@ namespace gui
 
 		glfwDestroyWindow(window);
 		glfwTerminate();
+	}
+
+	inline void start_frame()
+	{
+		glfwPollEvents();
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		enable_dockspace();
+	}
+
+	inline void end_frame()
+	{
+		static ImVec4 clear_color{0.45f, 0.55f, 0.60f, 1.00f};
+
+		// Rendering
+		ImGui::Render();
+		int display_w, display_h;
+		glfwMakeContextCurrent(window);
+		glfwGetFramebufferSize(window, &display_w, &display_h);
+		glViewport(0, 0, display_w, display_h);
+		glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		glfwMakeContextCurrent(window);
+		glfwSwapBuffers(window);
 	}
 }

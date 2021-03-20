@@ -42,7 +42,7 @@
     <ClInclude Include="src\materials\metal_material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\core\hittable.h">
+    <ClInclude Include="src\geometry\abstract\hittable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\core\utility.h">
@@ -51,7 +51,7 @@
     <ClInclude Include="src\materials\dieletric_material.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\raytrace_renderer.h">
+    <ClInclude Include="src\renderer\raytrace_renderer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\gui\gui_utils.h">
@@ -75,7 +75,7 @@
     <ClInclude Include="src\core\aabb.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\bvh.h">
+    <ClInclude Include="src\geometry\abstract\bvh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\materials\texture.h">
@@ -112,6 +112,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\core\hit_info.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\core\random.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -154,7 +157,7 @@
     <ClCompile Include="external\imgui\imgui_tables.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\core\hittable.cpp">
+    <ClCompile Include="src\geometry\abstract\hittable.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

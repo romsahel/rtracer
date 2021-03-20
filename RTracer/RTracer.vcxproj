@@ -171,20 +171,21 @@
     <ClCompile Include="external\imgui\imgui_draw.cpp" />
     <ClCompile Include="external\imgui\imgui_tables.cpp" />
     <ClCompile Include="external\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="src\core\hittable.cpp" />
+    <ClCompile Include="src\geometry\abstract\hittable.cpp" />
     <ClCompile Include="src\core\vec3.cpp" />
     <ClCompile Include="src\RTracer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="external\stb_image.h" />
     <ClInclude Include="external\stb_image_write.h" />
-    <ClInclude Include="src\bvh.h" />
+    <ClInclude Include="src\geometry\abstract\bvh.h" />
     <ClInclude Include="src\camera.h" />
     <ClInclude Include="src\core\aabb.h" />
     <ClInclude Include="src\core\color.h" />
-    <ClInclude Include="src\core\hittable.h" />
+    <ClInclude Include="src\geometry\abstract\hittable.h" />
     <ClInclude Include="src\core\gl_includer.h" />
     <ClInclude Include="src\core\hit_info.h" />
+    <ClInclude Include="src\core\random.h" />
     <ClInclude Include="src\geometry\box.h" />
     <ClInclude Include="src\geometry\rectangle.h" />
     <ClInclude Include="src\gui\gui_base_inspectors.h" />
@@ -203,7 +204,7 @@
     <ClInclude Include="src\gui\gui_image.h" />
     <ClInclude Include="src\materials\object_store.h" />
     <ClInclude Include="src\materials\texture.h" />
-    <ClInclude Include="src\raytrace_renderer.h" />
+    <ClInclude Include="src\renderer\raytrace_renderer.h" />
     <ClInclude Include="src\gui\selection_overlay.h" />
     <ClInclude Include="src\serializable.h" />
     <ClInclude Include="src\serializable_node.h" />

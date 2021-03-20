@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "core/gl_includer.h"
+#include "renderer/raytrace_renderer.h"
 
 /// <summary>
 /// manages an opengl texture to be renderered with imgui
@@ -36,10 +37,15 @@ public:
 	}
 
 	// update the content of the image to display
-	void update(const int image_width, const int image_height, const unsigned char* pixel_colors)
+	void update(const int image_width, const int image_height, const unsigned char* pixel_colors) const
 	{
 		glBindTexture(GL_TEXTURE_2D, m_rendererId);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image_width, image_height, 0, GL_RGB, GL_UNSIGNED_BYTE, pixel_colors);
+	}
+
+	void update(const raytrace_render_data& render) const
+	{
+		update(render.settings.image_width, render.settings.image_height, render.colors.data());
 	}
 
 	// TextureId to give to ImGui
