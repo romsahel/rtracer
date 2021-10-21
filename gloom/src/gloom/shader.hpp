@@ -10,7 +10,7 @@
 #include <fstream>
 #include <memory>
 #include <string>
-
+#include <filesystem>
 
 namespace Gloom
 {
@@ -26,14 +26,14 @@ namespace Gloom
         void   destroy()    { glDeleteProgram(mProgram); }
 
         /* Attach a shader to the current shader program */
-        void attach(std::string const &filename)
+        void attach(const std::filesystem::path& filename)
         {
             // Load GLSL Shader from source
             std::ifstream fd(filename.c_str());
             if (fd.fail())
             {
                 fprintf(stderr,
-                    "Something went wrong when attaching the Shader file at \"%s\".\n"
+                    "Something went wrong when attaching the Shader file at \"%ls\".\n"
                     "The file may not exist or is currently inaccessible.\n",
                     filename.c_str());
                 return;
@@ -54,7 +54,7 @@ namespace Gloom
                 glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &mLength);
                 std::unique_ptr<char[]> buffer(new char[mLength]);
                 glGetShaderInfoLog(shader, mLength, nullptr, buffer.get());
-                fprintf(stderr, "%s\n%s", filename.c_str(), buffer.get());
+                fprintf(stderr, "%ls\n%s", filename.c_str(), buffer.get());
             }
 
             assert(mStatus);
@@ -87,8 +87,8 @@ namespace Gloom
 
         /* Convenience function that attaches and links a vertex and a
            fragment shader in a shader program */
-        void makeBasicShader(std::string const &vertexFilename,
-                             std::string const &fragmentFilename)
+        void makeBasicShader(const std::filesystem::path& vertexFilename,
+                             const std::filesystem::path& fragmentFilename)
         {
             attach(vertexFilename);
             attach(fragmentFilename);
@@ -117,18 +117,17 @@ namespace Gloom
 
 
         /* Helper function for creating shaders */
-        GLuint create(std::string const &filename)
+        GLuint create(const std::filesystem::path& filename)
         {
-            // Extract file extension and create the correct shader type
-            auto idx = filename.rfind(".");
-            auto ext = filename.substr(idx + 1);
-                 if (ext == "comp") return glCreateShader(GL_COMPUTE_SHADER);
-            else if (ext == "frag") return glCreateShader(GL_FRAGMENT_SHADER);
-            else if (ext == "geom") return glCreateShader(GL_GEOMETRY_SHADER);
-            else if (ext == "tcs")  return glCreateShader(GL_TESS_CONTROL_SHADER);
-            else if (ext == "tes")  return glCreateShader(GL_TESS_EVALUATION_SHADER);
-            else if (ext == "vert") return glCreateShader(GL_VERTEX_SHADER);
-            else                    return false;
+	        // Extract file extension and create the correct shader type
+	        auto ext = filename.extension();
+	        if (ext == ".comp") return glCreateShader(GL_COMPUTE_SHADER);
+	        if (ext == ".frag") return glCreateShader(GL_FRAGMENT_SHADER);
+	        if (ext == ".geom") return glCreateShader(GL_GEOMETRY_SHADER);
+	        if (ext == ".tcs") return glCreateShader(GL_TESS_CONTROL_SHADER);
+	        if (ext == ".tes") return glCreateShader(GL_TESS_EVALUATION_SHADER);
+	        if (ext == ".vert") return glCreateShader(GL_VERTEX_SHADER);
+	        return false;
         }
 
     private:
