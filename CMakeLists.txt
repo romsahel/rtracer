@@ -13,7 +13,7 @@ set (CMAKE_SUPPRESS_REGENERATION TRUE) # Suppresses ZERO_CHECK
 if(MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
 else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -std=c++11")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -std=c++17")
   if(NOT WIN32)
     set(GLAD_LIBRARIES dl)
   endif()
@@ -76,5 +76,8 @@ target_link_libraries (${PROJECT_NAME}
                        glfw
                        ${GLFW_LIBRARIES}
                        ${GLAD_LIBRARIES})
+target_compile_features(${PROJECT_NAME}
+                        PRIVATE
+                        cxx_std_17)
 set_target_properties (${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/${PROJECT_NAME})
