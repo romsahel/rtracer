@@ -3,12 +3,44 @@
 #include <algorithm>
 #include <cstdint>
 
+#define UnwrapColor(TYPE, COLOR) COLOR.r<TYPE>(), COLOR.g<TYPE>(), COLOR.b<TYPE>(), COLOR.a<TYPE>()
+
 struct Color
 {
 	uint8_t m_r, m_g, m_b, m_a;
 
 	Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : m_r(r), m_g(g), m_b(b), m_a(a)
 	{
+	}
+
+	static Color Black()
+	{
+		return Color(0, 0, 0, 255);
+	}
+
+	static Color White()
+	{
+		return Color(255, 255, 255, 255);
+	}
+
+	static Color Red()
+	{
+		return Color(255, 0, 0, 255);
+	}
+
+	static Color Green()
+	{
+		return Color(0, 255, 0, 255);
+	}
+
+	static Color Blue()
+	{
+		return Color(0, 0, 255, 255);
+	}
+
+	static Color Transparent()
+	{
+		return Color(0, 0, 0, 0);
 	}
 
 	static Color FromFloats(float r, float g, float b, float a)
@@ -65,17 +97,16 @@ struct Color
 		return *this;
 	}
 
-	Color operator*(uint8_t factor) const
+	Color operator*(float factor) const
 	{
 		return Color(*this) *= factor;
 	}
 	
-	Color& operator*=(uint8_t factor)
+	Color& operator*=(float factor)
 	{
-		m_r = static_cast<uint8_t>(std::clamp(m_r * factor, 0, 255));
-		m_g = static_cast<uint8_t>(std::clamp(m_g * factor, 0, 255));
-		m_b = static_cast<uint8_t>(std::clamp(m_b * factor, 0, 255));
-		m_a = static_cast<uint8_t>(std::clamp(m_a * factor, 0, 255));
+		m_r = static_cast<uint8_t>(std::clamp(static_cast<float>(m_r) * factor, 0.0f, 255.0f));
+		m_g = static_cast<uint8_t>(std::clamp(static_cast<float>(m_g) * factor, 0.0f, 255.0f));
+		m_b = static_cast<uint8_t>(std::clamp(static_cast<float>(m_b) * factor, 0.0f, 255.0f));
 		return *this;
 	}
 };

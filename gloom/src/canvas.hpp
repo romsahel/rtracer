@@ -5,16 +5,6 @@
 #include "gloom/gloom.hpp"
 #include "gloom/shader.hpp"
 
-
-struct Point
-{
-	int x, y;
-
-	Point(int x, int y) : x(x), y(y)
-	{
-	}
-};
-
 class Canvas
 {
 public:
@@ -67,22 +57,26 @@ public:
 
 		// Then create your buffers, compile your shaders and bind your shader program and VAO.
 		shader.activate();
+
+		// seeing as we only have a single VAO there's no need to bind it every time,
+		// but we'll do so to keep things a bit more organized
 		glBindVertexArray(VAO);
-		// seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-		//Then use:
+
+		//
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 
 	void end()
 	{
+		glBindVertexArray(0);
 		shader.deactivate();
 	}
 
 	void putPixel(int x, int y, const Color& color)
 	{
-		GLint transformLoc = glGetUniformLocation(shader.get(), "inColor");
-		glUniform4f(transformLoc, color.r<float>(), color.g<float>(), color.b<float>(), color.a<float>());
+		const GLint transformLoc = glGetUniformLocation(shader.get(), "inColor");
+		glUniform4f(transformLoc, UnwrapColor(float, color));
 
 		glEnable(GL_SCISSOR_TEST);
 		glScissor(m_halfWidth + x, m_halfHeight + y, 1, 1); // position of pixel
@@ -90,61 +84,9 @@ public:
 		glDisable(GL_SCISSOR_TEST);
 	}
 
-	void drawLine(Point p0, Point p1, const Color& color)
-	{
-		if (p0.x > p1.x)
-		{
-			std::swap(p0, p1);
-		}
-
-		if (std::abs(p1.x - p0.x) > std::abs(p1.y - p0.y))
-		{
-			auto interpolator = Interpolator(p0.x, p0.y, p1.x, p1.y);
-			do
-			{
-				putPixel(interpolator.i, static_cast<int>(interpolator.d), color);
-			}
-			while (!interpolator.next());
-		}
-		else
-		{
-			auto interpolator = Interpolator(p0.y, p0.x, p1.y, p1.x);
-			do
-			{
-				putPixel(static_cast<int>(interpolator.d), interpolator.i, color);
-			}
-			while (!interpolator.next());
-		}
-	}
-
-	struct Interpolator
-	{
-		Interpolator(int i0, int d0, int i1, int d1)
-			: d(static_cast<float>(d0)),
-			  i(i0),
-			  a(static_cast<float>(d1 - d0) / static_cast<float>(i1 - i0)),
-			  i1(i1)
-		{
-		}
-
-		bool next()
-		{
-			const bool finished = i == i1;
-			d += a;
-			i++;
-			return finished;
-		}
-
-		float d;
-		int i;
-
-	private:
-		const float a;
-		const int i1;
-	};
-
 	GLFWwindow* m_window;
-	int m_halfWidth, m_halfHeight;
 	Gloom::Shader shader;
-	unsigned int VBO, VAO;
+	int m_halfWidth = -1, m_halfHeight = -1;
+	unsigned int VBO = 0, VAO = 0;
 };
+
