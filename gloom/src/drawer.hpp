@@ -19,6 +19,37 @@ struct Vertex
 	}
 };
 
+struct Point
+{
+	float x, y, z;
+};
+
+struct Camera
+{
+	Camera(float canvas_width, float canvas_height, float d)
+		: canvasWidth(canvas_width),
+		  canvasHeight(canvas_height),
+		  d(d),
+          viewportSizeX(1.0f),
+          viewportSizeY(canvas_height / canvas_width)
+	{
+	}
+
+	float canvasWidth, canvasHeight;
+	float d;
+	float viewportSizeX, viewportSizeY;
+
+	[[nodiscard]] Vertex ViewportToCanvas(float x, float y) const
+	{
+		return Vertex(static_cast<int>(x * canvasWidth / viewportSizeX), static_cast<int>(y * canvasHeight / viewportSizeY));
+	}
+
+	[[nodiscard]] Vertex Project(const Point& p) const
+	{
+		return ViewportToCanvas(p.x * d / p.z, p.y * d / p.z);
+	}
+};
+
 class Drawer
 {
 public:

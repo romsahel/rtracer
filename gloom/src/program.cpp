@@ -24,6 +24,9 @@ void runProgram(GLFWwindow* window)
 	// Set up your scene here (create Vertex Array Objects, etc.)
 	Canvas canvas{window};
 	Drawer drawer{canvas};
+	int canvasWidth = -1, canvasHeight = -1;
+	glfwGetWindowSize(window, &canvasWidth, &canvasHeight);
+	Camera camera(canvasWidth, canvasHeight, 1.0f);
 
 	// Rendering Loop
 	while (!glfwWindowShouldClose(window))
@@ -33,12 +36,41 @@ void runProgram(GLFWwindow* window)
 
 		drawer.drawLine(Vertex(-150, 0), Vertex(150, 0), Color::Black());
 		drawer.drawLine(Vertex(0, -250), Vertex(0, 250), Color::Black());
+		
+		// The four "front" vertices
+		auto vAf = Point{-2, -0.5, 5};
+		auto vBf = Point{-2,  0.5, 5};
+		auto vCf = Point{-1,  0.5, 5};
+		auto vDf = Point{-1, -0.5, 5};
+		// The four "back" vertices
+		auto vAb = Point{-2, -0.5, 6};
+		auto vBb = Point{-2,  0.5, 6};
+		auto vCb = Point{-1,  0.5, 6};
+		auto vDb = Point{-1, -0.5, 6};
 
-		auto p0 = Vertex(-200, -250, 255);
-		auto p1 = Vertex(200, 50, 128);
-		auto p2 = Vertex(20, 250, 0);
-		drawer.drawTriangle(p0, p1, p2, Color::Black(), DrawMode::Wireframe);
-		drawer.drawTriangle(p0, p1, p2, Color::Red(), DrawMode::Filled);
+		// The front face
+		drawer.drawLine(camera.Project(vAf), camera.Project(vBf), Color::Blue());
+		drawer.drawLine(camera.Project(vBf), camera.Project(vCf), Color::Blue());
+		drawer.drawLine(camera.Project(vCf), camera.Project(vDf), Color::Blue());
+		drawer.drawLine(camera.Project(vDf), camera.Project(vAf), Color::Blue());
+
+		// The back face
+		drawer.drawLine(camera.Project(vAb), camera.Project(vBb), Color::Red());
+		drawer.drawLine(camera.Project(vBb), camera.Project(vCb), Color::Red());
+		drawer.drawLine(camera.Project(vCb), camera.Project(vDb), Color::Red());
+		drawer.drawLine(camera.Project(vDb), camera.Project(vAb), Color::Red());
+
+		// The front-to-back edges
+		drawer.drawLine(camera.Project(vAf), camera.Project(vAb), Color::Green());
+		drawer.drawLine(camera.Project(vBf), camera.Project(vBb), Color::Green());
+		drawer.drawLine(camera.Project(vCf), camera.Project(vCb), Color::Green());
+		drawer.drawLine(camera.Project(vDf), camera.Project(vDb), Color::Green());
+
+		//auto p0 = Vertex(-200, -250, 255);
+		//auto p1 = Vertex(200, 50, 128);
+		//auto p2 = Vertex(20, 250, 0);
+		//drawer.drawTriangle(p0, p1, p2, Color::Black(), DrawMode::Wireframe);
+		//drawer.drawTriangle(p0, p1, p2, Color::Red(), DrawMode::Filled);
 
 		// drawing end
 		canvas.end();
