@@ -1,13 +1,18 @@
 // Local headers
 #include "program.hpp"
+
+
 #include "canvas.hpp"
 #include "drawer.hpp"
 #include "gloom/gloom.hpp"
 
-class Scene
+#include "sstream.h"
+#include "core/gui_initializer.h"
+
+void operator<<(sstream& os, Camera& camera)
 {
-	
-};
+	os << "Distance" << camera.d << sstream::endl_s{0.01f};
+}
 
 void runProgram(GLFWwindow* window)
 {
@@ -28,25 +33,39 @@ void runProgram(GLFWwindow* window)
 	glfwGetWindowSize(window, &canvasWidth, &canvasHeight);
 	Camera camera(canvasWidth, canvasHeight, 1.0f);
 
+	gui::initialize(window);
+	sstream inspector;
+
+	float x = 0.75f, y = 1.0f, z = 0.0f;
+
 	// Rendering Loop
 	while (!glfwWindowShouldClose(window))
 	{
+		gui::start_frame();
+
+		if (ImGui::Begin("Inspector"))
+		{
+			inspector << camera;
+			inspector << "Position" << x << y << z << sstream::endl_s{0.01f};
+		}
+		ImGui::End();
+
 		canvas.start();
 		// drawing start
 
 		drawer.drawLine(Vertex(-150, 0), Vertex(150, 0), Color::Black());
 		drawer.drawLine(Vertex(0, -250), Vertex(0, 250), Color::Black());
-		
+
 		// The four "front" vertices
-		auto vAf = Point{-2, -0.5, 5};
-		auto vBf = Point{-2,  0.5, 5};
-		auto vCf = Point{-1,  0.5, 5};
-		auto vDf = Point{-1, -0.5, 5};
+		auto vAf = Point{-2 + x, -0.5f + y, 5 + z};
+		auto vBf = Point{-2 + x, 0.5f + y, 5 + z};
+		auto vCf = Point{-1 + x, 0.5f + y, 5 + z};
+		auto vDf = Point{-1 + x, -0.5f + y, 5 + z};
 		// The four "back" vertices
-		auto vAb = Point{-2, -0.5, 6};
-		auto vBb = Point{-2,  0.5, 6};
-		auto vCb = Point{-1,  0.5, 6};
-		auto vDb = Point{-1, -0.5, 6};
+		auto vAb = Point{-2 + x, -0.5f + y, 6 + z};
+		auto vBb = Point{-2 + x, 0.5f + y, 6 + z};
+		auto vCb = Point{-1 + x, 0.5f + y, 6 + z};
+		auto vDb = Point{-1 + x, -0.5f + y, 6 + z};
 
 		// The front face
 		drawer.drawLine(camera.Project(vAf), camera.Project(vBf), Color::Blue());
@@ -75,12 +94,14 @@ void runProgram(GLFWwindow* window)
 		// drawing end
 		canvas.end();
 
-		glfwPollEvents();
 		handleKeyboardInput(window);
 
 		// Flip buffers
-		glfwSwapBuffers(window);
+		gui::end_frame();
+		//glfwSwapBuffers(window);
 	}
+
+	gui::cleanup();
 }
 
 

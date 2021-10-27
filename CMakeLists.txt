@@ -35,12 +35,23 @@ include_directories (gloom/src/
                      gloom/vendor/glad/include/
                      gloom/vendor/glfw/include/
                      gloom/vendor/glm/
-                     gloom/vendor/stb/)
+                     gloom/vendor/stb/
+                     gloom/vendor/imgui/
+               )
 
 #
 # Add files
 #
-file (GLOB         VENDORS_SOURCES gloom/vendor/glad/src/glad.c)
+file (GLOB         VENDORS_SOURCES gloom/vendor/glad/src/glad.c
+                                   gloom/vendor/imgui/backends/imgui_impl_win32.cpp
+                                   gloom/vendor/imgui/backends/imgui_impl_opengl3.cpp
+                                   gloom/vendor/imgui/backends/imgui_impl_glfw.cpp
+                                   gloom/vendor/imgui/imgui_demo.cpp
+                                   gloom/vendor/imgui/imgui_draw.cpp
+                                   gloom/vendor/imgui/imgui_tables.cpp
+                                   gloom/vendor/imgui/imgui_widgets.cpp
+                                   gloom/vendor/imgui/imgui.cpp
+)
 file (GLOB_RECURSE PROJECT_HEADERS gloom/src/*.hpp
                                    gloom/src/*.h)
 file (GLOB_RECURSE PROJECT_SOURCES gloom/src/*.cpp
